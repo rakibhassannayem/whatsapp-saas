@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { dashboardApiRequest } from "@/lib/dashboard-api";
 
 type MessageTemplate = {
   id: string;
@@ -11,12 +11,10 @@ type MessageTemplate = {
 };
 
 type TemplatesManagerProps = {
-  businessId: string;
   initialTemplates: MessageTemplate[];
 };
 
 export default function TemplatesManager({
-  businessId,
   initialTemplates,
 }: TemplatesManagerProps) {
   const [templates, setTemplates] = useState(initialTemplates);
@@ -34,29 +32,19 @@ export default function TemplatesManager({
     setMessage("");
     setBusy(true);
 
-    const supabase = createClient();
-    const { data, error } = await supabase
-      .from("message_templates")
-      .insert({
-        business_id: businessId,
-        name,
-        body,
-      })
-      .select("id, name, body, created_at")
-      .single();
+    const { data, error } = await dashboardApiRequest<MessageTemplate>(
+      "/api/dashboard/templates",
+      { method: "POST", body: { name, body } },
+    );
 
     setBusy(false);
 
-    if (error) {
-      if (error.code === "23505") {
-        setMessage("এই নামে template আগে থেকেই আছে।");
-      } else {
-        setMessage(error.message);
-      }
+    if (error || !data) {
+      setMessage(error ?? "Template save করা যায়নি।");
       return;
     }
 
-    setTemplates((current) => [data as MessageTemplate, ...current]);
+    setTemplates((current) => [data, ...current]);
     setMessage("Message template save হয়েছে।");
     form.reset();
   }
@@ -71,17 +59,15 @@ export default function TemplatesManager({
     setMessage("");
     setBusy(true);
 
-    const supabase = createClient();
-    const { error } = await supabase
-      .from("message_templates")
-      .delete()
-      .eq("id", template.id)
-      .eq("business_id", businessId);
+    const { error } = await dashboardApiRequest<{ success: boolean }>(
+      "/api/dashboard/templates",
+      { method: "DELETE", body: { id: template.id } },
+    );
 
     setBusy(false);
 
     if (error) {
-      setMessage(error.message);
+      setMessage(error);
       return;
     }
 
@@ -114,9 +100,7 @@ export default function TemplatesManager({
           </label>
 
           <label className="block">
-            <span className="mb-1 block text-sm font-medium">
-              Message
-            </span>
+            <span className="mb-1 block text-sm font-medium">Message</span>
             <textarea
               className="min-h-32 w-full rounded-md border p-2"
               name="body"
@@ -147,10 +131,7 @@ export default function TemplatesManager({
         ) : (
           <ul className="space-y-3">
             {templates.map((template) => (
-              <li
-                className="rounded-lg border bg-white p-4"
-                key={template.id}
-              >
+              <li className="rounded-lg border bg-white p-4" key={template.id}>
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
                     <h3 className="font-medium">{template.name}</h3>
@@ -175,7 +156,10 @@ export default function TemplatesManager({
       </section>
 
       {message && (
-        <p className="mt-4 rounded-md border bg-white p-3 text-sm" role="status">
+        <p
+          className="mt-4 rounded-md border bg-white p-3 text-sm"
+          role="status"
+        >
           {message}
         </p>
       )}

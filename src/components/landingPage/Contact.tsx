@@ -20,8 +20,8 @@ const Contact = () => {
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-3">
-            <Link className={buttonVariants({ size: "lg" })} href="/signup">
+          <div className="flex flex-wrap gap-3 text-black">
+            <Link className={buttonVariants({ size: "lg" })} href="/dashboard">
               Get started
             </Link>
             <Link

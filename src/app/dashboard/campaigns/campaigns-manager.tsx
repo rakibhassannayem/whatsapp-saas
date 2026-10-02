@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { dashboardApiRequest } from "@/lib/dashboard-api";
 import Link from "next/link";
 
 type Campaign = {
@@ -20,13 +20,11 @@ type MessageTemplate = {
 };
 
 type CampaignsManagerProps = {
-  businessId: string;
   initialCampaigns: Campaign[];
   initialTemplates: MessageTemplate[];
 };
 
 export default function CampaignsManager({
-  businessId,
   initialCampaigns,
   initialTemplates,
 }: CampaignsManagerProps) {
@@ -52,32 +50,21 @@ export default function CampaignsManager({
     setMessage("");
     setBusy(true);
 
-    const supabase = createClient();
-    const { data, error } = await supabase
-      .from("campaigns")
-      .insert({
-        business_id: businessId,
-        name,
-        message_body: body,
-      })
-      .select("id, name, message_body, status, created_at")
-      .single();
+    const { data, error } = await dashboardApiRequest<
+      Omit<Campaign, "audience_count">
+    >("/api/dashboard/campaigns", {
+      method: "POST",
+      body: { name, message_body: body },
+    });
 
     setBusy(false);
 
-    if (error) {
-      if (error.code === "23505") {
-        setMessage("এই নামে campaign আগে থেকেই আছে।");
-      } else {
-        setMessage(error.message);
-      }
+    if (error || !data) {
+      setMessage(error ?? "Campaign save করা যায়নি।");
       return;
     }
 
-    setCampaigns((current) => [
-      { ...(data as Omit<Campaign, "audience_count">), audience_count: 0 },
-      ...current,
-    ]);
+    setCampaigns((current) => [{ ...data, audience_count: 0 }, ...current]);
     setMessage("Campaign draft save হয়েছে।");
     setSelectedTemplateId("");
     setMessageBody("");
@@ -97,26 +84,17 @@ export default function CampaignsManager({
     setMessage("");
     setBusy(true);
 
-    const supabase = createClient();
-    const { data, error } = await supabase
-      .from("campaigns")
-      .update({
-        name,
-        message_body: body,
-      })
-      .eq("id", campaignId)
-      .eq("business_id", businessId)
-      .select("id, name, message_body, status, created_at")
-      .single();
+    const { data, error } = await dashboardApiRequest<
+      Omit<Campaign, "audience_count">
+    >("/api/dashboard/campaigns", {
+      method: "PATCH",
+      body: { id: campaignId, name, message_body: body },
+    });
 
     setBusy(false);
 
-    if (error) {
-      if (error.code === "23505") {
-        setMessage("এই নামে অন্য একটি campaign আগে থেকেই আছে।");
-      } else {
-        setMessage(error.message);
-      }
+    if (error || !data) {
+      setMessage(error ?? "Campaign update করা যায়নি।");
       return;
     }
 
@@ -139,17 +117,15 @@ export default function CampaignsManager({
     setMessage("");
     setBusy(true);
 
-    const supabase = createClient();
-    const { error } = await supabase
-      .from("campaigns")
-      .delete()
-      .eq("id", campaign.id)
-      .eq("business_id", businessId);
+    const { error } = await dashboardApiRequest<{ success: boolean }>(
+      "/api/dashboard/campaigns",
+      { method: "DELETE", body: { id: campaign.id } },
+    );
 
     setBusy(false);
 
     if (error) {
-      setMessage(error.message);
+      setMessage(error);
       return;
     }
 

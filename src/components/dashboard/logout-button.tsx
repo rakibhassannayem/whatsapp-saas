@@ -2,18 +2,20 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { dashboardApiRequest } from "@/lib/dashboard-api";
 
 export default function LogoutButton() {
   const router = useRouter();
   const [message, setMessage] = useState("");
 
   async function handleLogout() {
-    const supabase = createClient();
-    const { error } = await supabase.auth.signOut();
+    const { error } = await dashboardApiRequest<{ success: boolean }>(
+      "/api/dashboard/logout",
+      { method: "POST" },
+    );
 
     if (error) {
-      setMessage(error.message);
+      setMessage(error);
       return;
     }
 
@@ -23,10 +25,7 @@ export default function LogoutButton() {
 
   return (
     <div className="mt-6">
-      <button
-        className="rounded border px-4 py-2"
-        onClick={handleLogout}
-      >
+      <button className="rounded border px-4 py-2" onClick={handleLogout}>
         Log out
       </button>
 

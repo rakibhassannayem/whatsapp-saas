@@ -93,7 +93,6 @@ export default async function CustomersPage() {
       </Link>
 
       <CustomerForm
-        businessId={business.id}
         initialCustomers={customers ?? []}
         initialTags={tags ?? []}
         initialCustomerTags={customerTags ?? []}

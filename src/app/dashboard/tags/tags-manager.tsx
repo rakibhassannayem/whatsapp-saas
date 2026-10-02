@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { dashboardApiRequest } from "@/lib/dashboard-api";
 
 type Tag = {
   id: string;
@@ -10,14 +10,10 @@ type Tag = {
 };
 
 type TagsManagerProps = {
-  businessId: string;
   initialTags: Tag[];
 };
 
-export default function TagsManager({
-  businessId,
-  initialTags,
-}: TagsManagerProps) {
+export default function TagsManager({ initialTags }: TagsManagerProps) {
   const [tags, setTags] = useState(initialTags);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
@@ -32,29 +28,20 @@ export default function TagsManager({
     setMessage("");
     setBusy(true);
 
-    const supabase = createClient();
-    const { data, error } = await supabase
-      .from("tags")
-      .insert({
-        business_id: businessId,
-        name,
-      })
-      .select("id, name, created_at")
-      .single();
+    const { data, error } = await dashboardApiRequest<Tag>(
+      "/api/dashboard/tags",
+      { method: "POST", body: { name } },
+    );
 
     setBusy(false);
 
-    if (error) {
-      if (error.code === "23505") {
-        setMessage("এই নামে tag ইতিমধ্যে আছে।");
-      } else {
-        setMessage(error.message);
-      }
+    if (error || !data) {
+      setMessage(error ?? "Tag তৈরি করা যায়নি।");
       return;
     }
 
     setTags((current) =>
-      [...current, data as Tag].sort((a, b) => a.name.localeCompare(b.name)),
+      [...current, data].sort((a, b) => a.name.localeCompare(b.name)),
     );
     setMessage("Tag তৈরি হয়েছে।");
     form.reset();
@@ -70,17 +57,15 @@ export default function TagsManager({
     setMessage("");
     setBusy(true);
 
-    const supabase = createClient();
-    const { error } = await supabase
-      .from("tags")
-      .delete()
-      .eq("id", tag.id)
-      .eq("business_id", businessId);
+    const { error } = await dashboardApiRequest<{ success: boolean }>(
+      "/api/dashboard/tags",
+      { method: "DELETE", body: { id: tag.id } },
+    );
 
     setBusy(false);
 
     if (error) {
-      setMessage(error.message);
+      setMessage(error);
       return;
     }
 

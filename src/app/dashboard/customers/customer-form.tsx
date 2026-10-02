@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { dashboardApiRequest } from "@/lib/dashboard-api";
 
 type Customer = {
   id: string;
@@ -22,14 +22,12 @@ type CustomerTag = {
 };
 
 type CustomerFormProps = {
-  businessId: string;
   initialCustomers: Customer[];
   initialTags: Tag[];
   initialCustomerTags: CustomerTag[];
 };
 
 export default function CustomerForm({
-  businessId,
   initialCustomers,
   initialTags,
   initialCustomerTags,
@@ -53,26 +51,26 @@ export default function CustomerForm({
     setMessage("");
     setBusy(true);
 
-    const supabase = createClient();
-    const { data, error } = await supabase
-      .from("customers")
-      .insert({
-        business_id: businessId,
-        full_name: fullName,
-        phone_e164: phone,
-        email: email || null,
-      })
-      .select("id, full_name, phone_e164, email, created_at")
-      .single();
+    const { data, error } = await dashboardApiRequest<Customer>(
+      "/api/dashboard/customers",
+      {
+        method: "POST",
+        body: {
+          full_name: fullName,
+          phone_e164: phone,
+          email: email || null,
+        },
+      },
+    );
 
     setBusy(false);
 
-    if (error) {
-      setMessage(error.message);
+    if (error || !data) {
+      setMessage(error ?? "Customer যোগ করা যায়নি।");
       return;
     }
 
-    setCustomers((current) => [data as Customer, ...current]);
+    setCustomers((current) => [data, ...current]);
     setMessage("Customer যোগ হয়েছে।");
     form.reset();
   }
@@ -91,30 +89,28 @@ export default function CustomerForm({
     setMessage("");
     setBusy(true);
 
-    const supabase = createClient();
-    const { data, error } = await supabase
-      .from("customers")
-      .update({
-        full_name: fullName,
-        phone_e164: phone,
-        email: email || null,
-      })
-      .eq("id", customerToUpdate.id)
-      .eq("business_id", businessId)
-      .select("id, full_name, phone_e164, email, created_at")
-      .single();
+    const { data, error } = await dashboardApiRequest<Customer>(
+      "/api/dashboard/customers",
+      {
+        method: "PATCH",
+        body: {
+          id: customerToUpdate.id,
+          full_name: fullName,
+          phone_e164: phone,
+          email: email || null,
+        },
+      },
+    );
 
     setBusy(false);
 
-    if (error) {
-      setMessage(error.message);
+    if (error || !data) {
+      setMessage(error ?? "Customer update করা যায়নি।");
       return;
     }
 
     setCustomers((current) =>
-      current.map((customer) =>
-        customer.id === data.id ? (data as Customer) : customer,
-      ),
+      current.map((customer) => (customer.id === data.id ? data : customer)),
     );
     setEditingCustomer(null);
     setMessage("Customer update হয়েছে।");
@@ -130,17 +126,15 @@ export default function CustomerForm({
     setMessage("");
     setBusy(true);
 
-    const supabase = createClient();
-    const { error } = await supabase
-      .from("customers")
-      .delete()
-      .eq("id", customer.id)
-      .eq("business_id", businessId);
+    const { error } = await dashboardApiRequest<{ success: boolean }>(
+      "/api/dashboard/customers",
+      { method: "DELETE", body: { id: customer.id } },
+    );
 
     setBusy(false);
 
     if (error) {
-      setMessage(error.message);
+      setMessage(error);
       return;
     }
 
@@ -154,17 +148,15 @@ export default function CustomerForm({
     setMessage("");
     setBusy(true);
 
-    const supabase = createClient();
-    const { error } = await supabase.from("customer_tags").insert({
-      business_id: businessId,
-      customer_id: customerId,
-      tag_id: tagId,
-    });
+    const { error } = await dashboardApiRequest<{ success: boolean }>(
+      "/api/dashboard/customer-tags",
+      { method: "POST", body: { customerId, tagId } },
+    );
 
     setBusy(false);
 
     if (error) {
-      setMessage(error.message);
+      setMessage(error);
       return;
     }
 
@@ -179,18 +171,15 @@ export default function CustomerForm({
     setMessage("");
     setBusy(true);
 
-    const supabase = createClient();
-    const { error } = await supabase
-      .from("customer_tags")
-      .delete()
-      .eq("business_id", businessId)
-      .eq("customer_id", customerId)
-      .eq("tag_id", tagId);
+    const { error } = await dashboardApiRequest<{ success: boolean }>(
+      "/api/dashboard/customer-tags",
+      { method: "DELETE", body: { customerId, tagId } },
+    );
 
     setBusy(false);
 
     if (error) {
-      setMessage(error.message);
+      setMessage(error);
       return;
     }
 

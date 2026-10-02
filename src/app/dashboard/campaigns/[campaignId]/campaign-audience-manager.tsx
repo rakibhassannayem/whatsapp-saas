@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { dashboardApiRequest } from "@/lib/dashboard-api";
 
 type Customer = {
   id: string;
@@ -53,23 +53,23 @@ export default function CampaignAudienceManager({
     setMessage("");
     setBusy(true);
 
-    const supabase = createClient();
-
-    const { error } = shouldSelect
-      ? await supabase.from("campaign_recipients").insert({
-          campaign_id: campaignId,
-          customer_id: customerId,
-        })
-      : await supabase
-          .from("campaign_recipients")
-          .delete()
-          .eq("campaign_id", campaignId)
-          .eq("customer_id", customerId);
+    const { error } = await dashboardApiRequest<{ success: boolean }>(
+      "/api/dashboard/campaign-recipients",
+      shouldSelect
+        ? {
+            method: "POST",
+            body: { campaignId, customerIds: [customerId] },
+          }
+        : {
+            method: "DELETE",
+            body: { campaignId, customerId },
+          },
+    );
 
     setBusy(false);
 
     if (error) {
-      setMessage(error.message);
+      setMessage(error);
       return;
     }
 
@@ -113,18 +113,18 @@ export default function CampaignAudienceManager({
     setMessage("");
     setBusy(true);
 
-    const supabase = createClient();
-    const { error } = await supabase.from("campaign_recipients").insert(
-      customerIdsToAdd.map((customerId) => ({
-        campaign_id: campaignId,
-        customer_id: customerId,
-      })),
+    const { error } = await dashboardApiRequest<{ success: boolean }>(
+      "/api/dashboard/campaign-recipients",
+      {
+        method: "POST",
+        body: { campaignId, customerIds: customerIdsToAdd },
+      },
     );
 
     setBusy(false);
 
     if (error) {
-      setMessage(error.message);
+      setMessage(error);
       return;
     }
 
@@ -150,18 +150,21 @@ export default function CampaignAudienceManager({
     setMessage("");
     setBusy(true);
 
-    const supabase = createClient();
-    const { error } = await supabase.from("campaign_recipients").insert(
-      unselectedCustomers.map((customer) => ({
-        campaign_id: campaignId,
-        customer_id: customer.id,
-      })),
+    const { error } = await dashboardApiRequest<{ success: boolean }>(
+      "/api/dashboard/campaign-recipients",
+      {
+        method: "POST",
+        body: {
+          campaignId,
+          customerIds: unselectedCustomers.map((customer) => customer.id),
+        },
+      },
     );
 
     setBusy(false);
 
     if (error) {
-      setMessage(error.message);
+      setMessage(error);
       return;
     }
 
@@ -186,16 +189,15 @@ export default function CampaignAudienceManager({
     setMessage("");
     setBusy(true);
 
-    const supabase = createClient();
-    const { error } = await supabase
-      .from("campaign_recipients")
-      .delete()
-      .eq("campaign_id", campaignId);
+    const { error } = await dashboardApiRequest<{ success: boolean }>(
+      "/api/dashboard/campaign-recipients",
+      { method: "DELETE", body: { campaignId } },
+    );
 
     setBusy(false);
 
     if (error) {
-      setMessage(error.message);
+      setMessage(error);
       return;
     }
 

@@ -105,7 +105,6 @@ export default async function CampaignsPage() {
       <p className="mt-1 text-gray-600">{business.name}</p>
 
       <CampaignsManager
-        businessId={business.id}
         initialCampaigns={campaignsWithAudience}
         initialTemplates={templates ?? []}
       />

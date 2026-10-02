@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { MessageCircle, Menu } from "lucide-react";
+import { LayoutDashboard, MessageCircle, Menu } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
+import { createClient } from "@/lib/supabase/server";
 
 const navigation = [
   { label: "Features", href: "/#features" },
@@ -10,7 +11,13 @@ const navigation = [
   { label: "Contact", href: "/#contact" },
 ];
 
-export default function Header() {
+export default async function Header() {
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.getClaims();
+  const signedIn = !error && Boolean(data?.claims);
+  const email =
+    typeof data?.claims?.email === "string" ? data.claims.email : null;
+
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/90 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 sm:px-8">
@@ -42,16 +49,35 @@ export default function Header() {
           ))}
         </nav>
 
-        <div className="hidden items-center gap-2 md:flex">
-          <Link
-            className={buttonVariants({ variant: "ghost", size: "sm" })}
-            href="/login"
-          >
-            Sign in
-          </Link>
-          <Link className={buttonVariants({ size: "sm" })} href="/signup">
-            Get started
-          </Link>
+        <div className="hidden items-center gap-3 md:flex">
+          {signedIn ? (
+            <>
+              {email && (
+                <span className="max-w-48 truncate text-sm text-slate-500">
+                  {email}
+                </span>
+              )}
+              <Link
+                className={buttonVariants({ size: "sm" })}
+                href="/dashboard"
+              >
+                <LayoutDashboard data-icon="inline-start" />
+                Dashboard
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link
+                className={buttonVariants({ variant: "ghost", size: "sm" })}
+                href="/login"
+              >
+                Sign in
+              </Link>
+              <Link className={buttonVariants({ size: "sm" })} href="/signup">
+                Get started
+              </Link>
+            </>
+          )}
         </div>
 
         <details className="group relative md:hidden">
@@ -73,18 +99,37 @@ export default function Header() {
 
             <div className="my-1 border-t" />
 
-            <Link
-              className="rounded-md px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
-              href="/login"
-            >
-              Sign in
-            </Link>
-            <Link
-              className="rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700"
-              href="/signup"
-            >
-              Get started
-            </Link>
+            {signedIn ? (
+              <>
+                {email && (
+                  <span className="truncate px-3 py-2 text-sm text-slate-500">
+                    {email}
+                  </span>
+                )}
+                <Link
+                  className="flex items-center gap-2 rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700"
+                  href="/dashboard"
+                >
+                  <LayoutDashboard className="size-4" aria-hidden="true" />
+                  Dashboard
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link
+                  className="rounded-md px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                  href="/login"
+                >
+                  Sign in
+                </Link>
+                <Link
+                  className="rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700"
+                  href="/signup"
+                >
+                  Get started
+                </Link>
+              </>
+            )}
           </div>
         </details>
       </div>

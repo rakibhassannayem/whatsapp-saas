@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import LogoutButton from "./logout-button";
+import LogoutButton from "@/components/dashboard/logout-button";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -136,10 +136,7 @@ export default async function DashboardPage() {
           >
             Customers manage করো
           </Link>
-          <Link
-            className="rounded-md border px-4 py-2"
-            href="/dashboard/tags"
-          >
+          <Link className="rounded-md border px-4 py-2" href="/dashboard/tags">
             Tags manage করো
           </Link>
         </div>

@@ -51,7 +51,7 @@ export default async function ImportCustomersPage() {
         Import customers from CSV
       </Link>
 
-      <CustomerImporter businessId={business.id} />
+      <CustomerImporter />
     </main>
   );
 }

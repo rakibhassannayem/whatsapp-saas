@@ -19,7 +19,11 @@ export default async function TagsPage() {
     .maybeSingle();
 
   if (businessError) {
-    return <main className="p-8">Business load করতে সমস্যা: {businessError.message}</main>;
+    return (
+      <main className="p-8">
+        Business load করতে সমস্যা: {businessError.message}
+      </main>
+    );
   }
 
   if (!business) {
@@ -40,7 +44,9 @@ export default async function TagsPage() {
     .order("name", { ascending: true });
 
   if (tagsError) {
-    return <main className="p-8">Tags load করতে সমস্যা: {tagsError.message}</main>;
+    return (
+      <main className="p-8">Tags load করতে সমস্যা: {tagsError.message}</main>
+    );
   }
 
   return (
@@ -52,7 +58,7 @@ export default async function TagsPage() {
       <h1 className="mt-4 text-2xl font-semibold">Tags</h1>
       <p className="mt-1 text-gray-600">{business.name}</p>
 
-      <TagsManager businessId={business.id} initialTags={tags ?? []} />
+      <TagsManager initialTags={tags ?? []} />
     </main>
   );
 }

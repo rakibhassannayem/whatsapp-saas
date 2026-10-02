@@ -56,10 +56,7 @@ export default async function TemplatesPage() {
       <h1 className="text-2xl font-semibold">Message templates</h1>
       <p className="mt-1 text-gray-600">{business.name}</p>
 
-      <TemplatesManager
-        businessId={business.id}
-        initialTemplates={templates ?? []}
-      />
+      <TemplatesManager initialTemplates={templates ?? []} />
     </main>
   );
 }
