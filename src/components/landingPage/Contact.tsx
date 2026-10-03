@@ -1,44 +1,32 @@
 import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
+import { BadgeCheck, FileSpreadsheet, Tags, Megaphone } from "lucide-react";
 
-import { buttonVariants } from "@/components/ui/button";
-const Contact = () => {
+export function HowItWorks() {
   return (
-    <section id="contact" className="scroll-mt-24 px-5 py-20 sm:px-8 sm:py-24">
-      <div className="mx-auto max-w-5xl rounded-3xl bg-slate-950 px-6 py-12 text-white sm:px-12 sm:py-14">
-        <div className="grid gap-8 md:grid-cols-[1fr_auto] md:items-center">
-          <div className="max-w-2xl">
-            <p className="text-sm font-semibold uppercase tracking-widest text-emerald-300">
-              Contact
-            </p>
-            <h2 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
-              Have a question about your messaging workflow?
-            </h2>
-            <p className="mt-4 leading-7 text-slate-300">
-              Get in touch to discuss your needs or create a workspace and
-              explore the product.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap gap-3 text-black">
-            <Link className={buttonVariants({ size: "lg" })} href="/dashboard">
-              Get started
-            </Link>
-            <Link
-              className={buttonVariants({
-                variant: "outline",
-                size: "lg",
-              })}
-              href="mailto:hello@example.com"
-            >
-              Contact us
-              <ArrowUpRight data-icon="inline-end" />
-            </Link>
-          </div>
+    <section id="how" className="mx-auto max-w-6xl px-3 sm:px-5">
+      <div className="rounded-[2rem] bg-[#1a2340] px-6 py-12 text-center text-white sm:px-12">
+        <p className="text-[11px] font-bold uppercase tracking-widest text-emerald-300">No bot • You send, they receive</p>
+        <h2 className="mt-1 text-2xl font-extrabold">Send your Eid offer in 3 steps</h2>
+        <div className="mt-8 grid gap-8 sm:grid-cols-3">
+          {[
+            { n: "1", t: "Import contacts from Excel", s: "Names + numbers in 2 minutes", icon: FileSpreadsheet },
+            { n: "2", t: "Pick tag + write custom msg", s: "e.g. VIP + Hi {{name}}, 20% OFF", icon: Tags },
+            { n: "3", t: "Broadcast to all at once", s: "Personal for each customer", icon: Megaphone },
+          ].map((s) => (
+            <div key={s.n}>
+              <span className="mx-auto flex size-9 items-center justify-center rounded-full bg-emerald-500 text-[14px] font-bold">{s.n}</span>
+              <p className="mx-auto mt-3 max-w-[200px] text-[14px] font-bold leading-5">{s.t}</p>
+              <p className="mx-auto mt-1 max-w-[200px] text-[12px] leading-5 text-emerald-200/70">{s.s}</p>
+            </div>
+          ))}
         </div>
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-6 text-[12px] text-emerald-200">
+          <span className="flex items-center gap-1.5"><BadgeCheck className="size-4" />Personalized with customer name.</span>
+          <span className="flex items-center gap-1.5"><BadgeCheck className="size-4" />Works with your existing WhatsApp number.</span>
+        </div>
+        <Link href="/signup" className="mt-6 inline-block rounded-full bg-emerald-400 px-6 py-2.5 text-[12px] font-bold text-emerald-950">START MY FIRST BROADCAST</Link>
       </div>
     </section>
   );
-};
+}
 
-export default Contact;

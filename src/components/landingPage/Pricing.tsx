@@ -1,74 +1,33 @@
 import Link from "next/link";
+import { MessageCircle, CheckCheck } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { buttonVariants } from "@/components/ui/button";
-
-const plans = [
-  {
-    name: "Starter",
-    description:
-      "For businesses beginning to organize their customer contacts.",
-  },
-  {
-    name: "Growth",
-    description: "For teams preparing campaigns for more focused audiences.",
-  },
-  {
-    name: "Scale",
-    description: "For businesses planning a larger messaging workflow.",
-  },
-];
-
-const Pricing = () => {
+export function Banner() {
   return (
-    <section id="pricing" className="scroll-mt-24 py-20 sm:py-24">
-      <div className="mx-auto max-w-7xl px-5 sm:px-8">
-        <div className="mx-auto max-w-2xl text-center">
-          <p className="text-sm font-semibold uppercase tracking-widest text-emerald-700">
-            Pricing
+    <section className="mx-auto max-w-6xl px-3 sm:px-5">
+      <div className="relative grid overflow-hidden rounded-[2rem] bg-[#ffde59] lg:grid-cols-2">
+        <div className="p-8 sm:p-12">
+          <p className="text-[11px] font-bold uppercase tracking-widest text-slate-700">Not a bot • Not auto-reply</p>
+          <h2 className="mt-2 text-3xl font-extrabold leading-tight sm:text-4xl">One Message.<br />Every Customer.<br />Personal — Like You Sent It One-By-One.</h2>
+          <p className="mt-3 max-w-sm text-[13px] leading-6 text-slate-700">
+            Write your Eid offer once with {"{{name}}"}. We personalize it for each customer and broadcast it on WhatsApp.
           </p>
-          <h2 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
-            Plans that can grow with your business
-          </h2>
-          <p className="mt-4 leading-7 text-slate-600">
-            Pricing and plan limits are being finalized. Contact us to discuss
-            what your business needs.
-          </p>
+          <Link href="#how" className="mt-6 inline-block rounded-full border border-slate-900 px-5 py-2 text-[12px] font-bold">SEE HOW IT WORKS</Link>
         </div>
-
-        <div className="mt-12 grid gap-5 md:grid-cols-3">
-          {plans.map((plan) => (
-            <Card className="rounded-2xl border-slate-200" key={plan.name}>
-              <CardHeader>
-                <Badge variant="outline" className="w-fit rounded-full">
-                  Plan details coming soon
-                </Badge>
-                <CardTitle className="pt-2 text-xl">{plan.name}</CardTitle>
-                <CardDescription className="min-h-12 leading-6">
-                  {plan.description}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Link
-                  className={buttonVariants({ variant: "outline" })}
-                  href="#contact"
-                >
-                  Ask about pricing
-                </Link>
-              </CardContent>
-            </Card>
-          ))}
+        <div className="relative flex items-end justify-center">
+          <div className="absolute right-6 top-6 flex size-14 items-center justify-center rounded-2xl bg-white shadow">
+            <MessageCircle className="size-7 text-emerald-600" />
+          </div>
+          <div className="m-6 w-full max-w-sm rounded-2xl bg-white/80 p-4">
+            <p className="text-[11px] font-bold text-slate-500">EID OFFER • TO: VIP (342)</p>
+            <div className="mt-2 rounded-xl rounded-tr-none bg-[#dcf8c6] p-3 text-[12px] leading-5 shadow-sm">
+              Hi {"{{name}}"}, Eid Mubarak! Flat 20% OFF till Friday — show this msg at counter.
+            </div>
+            <p className="mt-2 flex items-center gap-1 text-[11px] font-semibold text-slate-600"><CheckCheck className="size-3.5 text-sky-500" /> 2,000 contacts ready • Tags, templates done</p>
+          </div>
         </div>
       </div>
     </section>
   );
-};
+}
 
-export default Pricing;
+

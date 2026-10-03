@@ -1,118 +1,90 @@
-import { Badge } from "../ui/badge";
 import Link from "next/link";
-import { ArrowRight, ArrowUpRight, MessageCircle, Tags, UsersRound } from "lucide-react";
-import { buttonVariants } from "../ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Megaphone, BookCheck, Tags, Send, CheckCheck } from "lucide-react";
 
-const Hero = () => {
+export function PhoneMock() {
   return (
-    <section className="overflow-hidden bg-gradient-to-b from-emerald-50 via-white to-white">
-      <div className="mx-auto grid max-w-7xl items-center gap-14 px-5 py-20 sm:px-8 sm:py-28 lg:grid-cols-2 lg:gap-20">
-        <div>
-          <Badge className="rounded-full border-emerald-200 bg-emerald-50 px-3 py-1 text-emerald-800">
-            Customer messaging workspace
-          </Badge>
-
-          <h1 className="mt-6 max-w-2xl text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
-            Plan customer campaigns with more clarity.
-          </h1>
-
-          <p className="mt-6 max-w-xl text-lg leading-8 text-slate-600">
-            Organize your contacts, prepare reusable message drafts, and choose
-            a focused audience—all in one simple workspace.
-          </p>
-
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link className={buttonVariants({ size: "lg" })} href="/signup">
-              Create your workspace
-              <ArrowRight data-icon="inline-end" />
-            </Link>
-
-            <Link
-              className={buttonVariants({ variant: "outline", size: "lg" })}
-              href="#features"
-            >
-              Explore features
-            </Link>
+    <div className="relative mx-auto w-[250px] sm:w-[270px]">
+      <div className="rounded-[2rem] border-[6px] border-slate-900 bg-[#ece5dd] p-2 shadow-2xl">
+        <div className="rounded-[1.5rem] bg-[#ece5dd]">
+          <div className="flex items-center gap-2 rounded-t-[1.2rem] bg-[#075e54] px-3 py-2 text-white">
+            <span className="flex size-6 items-center justify-center rounded-full bg-white/20 text-[10px]">
+              <Megaphone className="size-3" />
+            </span>
+            <div>
+              <p className="text-[11px] font-semibold leading-none">Eid Offer Broadcast</p>
+              <p className="mt-0.5 text-[9px] text-emerald-200">To: VIP tag • 1,240 recipients</p>
+            </div>
           </div>
-
-          <p className="mt-5 text-sm text-slate-500">
-            Start by organizing contacts and preparing campaign drafts.
-          </p>
-        </div>
-
-        <div className="relative mx-auto w-full max-w-xl">
-          <div className="absolute -inset-8 rounded-full bg-emerald-100/70 blur-3xl" />
-
-          <Card className="relative overflow-hidden rounded-2xl border-slate-200 bg-white shadow-xl shadow-emerald-950/10">
-            <CardHeader className="border-b bg-slate-50/80">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <p className="text-sm text-slate-500">Campaign workspace</p>
-                  <CardTitle className="mt-1 text-lg">Product update</CardTitle>
-                </div>
-                <Badge variant="secondary">Draft</Badge>
-              </div>
-            </CardHeader>
-
-            <CardContent className="space-y-6 p-6">
-              <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                  Message
-                </p>
-                <p className="mt-2 rounded-xl bg-slate-50 p-4 text-sm leading-6 text-slate-700">
-                  Hello! We have an update to share with you. Take a look
-                  whenever you have a moment.
-                </p>
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                    Audience
-                  </p>
-                  <span className="text-sm text-slate-600">
-                    Select customers
-                  </span>
-                </div>
-
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <Badge variant="outline" className="rounded-full">
-                    <UsersRound data-icon="inline-start" />
-                    Customers
-                  </Badge>
-                  <Badge variant="outline" className="rounded-full">
-                    <Tags data-icon="inline-start" />
-                    Tagged audience
-                  </Badge>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between rounded-xl border border-emerald-100 bg-emerald-50/70 p-4">
-                <div className="flex items-center gap-3">
-                  <span className="flex size-10 items-center justify-center rounded-full bg-white text-emerald-700">
-                    <MessageCircle className="size-5" aria-hidden="true" />
-                  </span>
-                  <div>
-                    <p className="text-sm font-medium text-slate-900">
-                      Ready to review
-                    </p>
-                    <p className="text-xs text-slate-600">
-                      Message and audience in one place
-                    </p>
-                  </div>
-                </div>
-                <ArrowUpRight
-                  className="size-5 text-emerald-700"
-                  aria-hidden="true"
-                />
-              </div>
-            </CardContent>
-          </Card>
+          <div className="space-y-2 p-2">
+            <div className="ml-auto max-w-[95%] rounded-lg rounded-tr-none bg-[#dcf8c6] p-2 text-[10px] leading-4 shadow">
+              Assalamu Alaikum <b>Rahim!</b> Eid Mubarak — Flat <b>20% OFF</b> till Friday. Show this msg at counter.
+              <span className="mt-1 block text-right text-[8px] text-slate-500">— Anar Boutique</span>
+            </div>
+            <div className="ml-auto max-w-[95%] rounded-lg rounded-tr-none bg-[#dcf8c6] p-2 text-[10px] leading-4 shadow">
+              Assalamu Alaikum <b>Karim!</b> Eid Mubarak — Flat <b>20% OFF</b> till Friday. Show this msg at counter.
+              <span className="mt-1 block text-right text-[8px] text-slate-500">— Anar Boutique</span>
+            </div>
+            <div className="mx-auto flex w-fit items-center gap-1 rounded-full bg-white/80 px-2 py-1 text-[9px] text-slate-600 shadow-sm">
+              <CheckCheck className="size-3 text-sky-500" /> Sent to 1,240 • Delivered 1,189
+            </div>
+          </div>
+          <div className="flex items-center gap-1 p-2">
+            <div className="flex-1 rounded-full bg-white px-3 py-1.5 text-[10px] text-slate-400">Hi {"{{name}}"}, Eid offer...</div>
+            <span className="flex size-7 items-center justify-center rounded-full bg-[#00a884] text-white">
+              <Send className="size-3" />
+            </span>
+          </div>
         </div>
       </div>
-    </section>
+    </div>
   );
-};
+}
 
-export default Hero;
+export default function Hero() {
+  return (
+    <div id="about" className="mx-auto max-w-6xl px-3 sm:px-5">
+      <div className="relative overflow-hidden rounded-[2rem] bg-[#0b4a3c] px-6 pb-10 pt-10 sm:px-12 sm:pt-14">
+        <div className="relative grid items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
+          <div>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-[11px] font-semibold text-emerald-200">
+              <Megaphone className="size-3.5" /> No bot • No auto-reply • Just broadcast
+            </span>
+            <h1 className="mt-4 text-4xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-5xl">
+              Send One Eid Offer<br />To <span className="text-emerald-400">1,000 Customers</span><br />At Once
+            </h1>
+            <p className="mt-4 max-w-md text-[14px] leading-6 text-emerald-50/80">
+              Upload your customer list from Excel, pick who gets it with tags, write one message with {"{{name}}"},
+              and broadcast it on WhatsApp. Personal for everyone — sent in one click.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link href="/signup" className="rounded-full bg-emerald-400 px-5 py-2.5 text-[13px] font-semibold text-emerald-950">
+                Start Free Broadcast
+              </Link>
+              <Link href="#how" className="rounded-full bg-white px-5 py-2.5 text-[13px] font-semibold text-slate-900">
+                See How A Broadcast Looks
+              </Link>
+            </div>
+            <p className="mt-4 text-[12px] text-emerald-200/70">
+              Eid Campaign • Discount Blast • Re-opening Notice • Due Reminder
+            </p>
+          </div>
+          <div className="relative flex justify-center"><PhoneMock /></div>
+        </div>
+        <div className="relative mt-8 grid max-w-lg grid-cols-3 gap-2 rounded-2xl bg-white p-2">
+          {[
+            { icon: BookCheck, t: "Import", s: "Customer List", bg: "bg-orange-50" },
+            { icon: Tags, t: "Tag", s: "Audience", bg: "bg-emerald-50" },
+            { icon: Megaphone, t: "Broadcast", s: "At Once", bg: "bg-slate-100" },
+          ].map((c) => (
+            <div key={c.s} className={`rounded-xl ${c.bg} p-3`}>
+              <c.icon className="size-5 text-slate-700" />
+              <p className="mt-2 text-[12px] font-bold leading-tight text-slate-900">{c.t}<br />{c.s}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
