@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Plus, Upload } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import CustomerForm from "./customer-form";
+import PageHeader, { HeaderAction } from "@/components/dashboard/page-header";
+import CustomerList from "@/components/dashboard/customer-list";
 
 export default async function CustomersPage() {
   const supabase = await createClient();
@@ -20,20 +22,26 @@ export default async function CustomersPage() {
 
   if (businessError) {
     return (
-      <main className="p-8">
-        Business load করতে সমস্যা: {businessError.message}
-      </main>
+      <div>
+        <PageHeader title="Customers" />
+        <p className="mt-4 rounded-xl bg-red-50 px-4 py-2.5 text-[13px] text-red-600">
+          Could not load business: {businessError.message}
+        </p>
+      </div>
     );
   }
 
   if (!business) {
     return (
-      <main className="p-8">
-        <p>আগে একটি business তৈরি করতে হবে।</p>
-        <Link className="mt-3 inline-block underline" href="/onboarding">
-          Business তৈরি করো
+      <div>
+        <PageHeader title="Customers" subtitle="Create a business to manage customers." />
+        <Link
+          className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-emerald-500 px-4 py-2 text-[12px] font-bold text-white transition hover:bg-emerald-600"
+          href="/onboarding"
+        >
+          Create business
         </Link>
-      </main>
+      </div>
     );
   }
 
@@ -45,9 +53,12 @@ export default async function CustomersPage() {
 
   if (customersError) {
     return (
-      <main className="p-8">
-        Customer load করতে সমস্যা: {customersError.message}
-      </main>
+      <div>
+        <PageHeader title="Customers" subtitle={business.name} />
+        <p className="mt-4 rounded-xl bg-red-50 px-4 py-2.5 text-[13px] text-red-600">
+          Could not load customers: {customersError.message}
+        </p>
+      </div>
     );
   }
 
@@ -59,7 +70,12 @@ export default async function CustomersPage() {
 
   if (tagsError) {
     return (
-      <main className="p-8">Tag load করতে সমস্যা: {tagsError.message}</main>
+      <div>
+        <PageHeader title="Customers" subtitle={business.name} />
+        <p className="mt-4 rounded-xl bg-red-50 px-4 py-2.5 text-[13px] text-red-600">
+          Could not load tags: {tagsError.message}
+        </p>
+      </div>
     );
   }
 
@@ -70,33 +86,40 @@ export default async function CustomersPage() {
 
   if (customerTagsError) {
     return (
-      <main className="p-8">
-        Customer tag load করতে সমস্যা: {customerTagsError.message}
-      </main>
+      <div>
+        <PageHeader title="Customers" subtitle={business.name} />
+        <p className="mt-4 rounded-xl bg-red-50 px-4 py-2.5 text-[13px] text-red-600">
+          Could not load customer tags: {customerTagsError.message}
+        </p>
+      </div>
     );
   }
 
   return (
-    <main className="mx-auto max-w-3xl p-8">
-      <Link className="text-sm underline" href="/dashboard">
-        ← Dashboard
-      </Link>
+    <div>
+      <PageHeader
+        title="Customers"
+        subtitle={`${business.name} • ${customers?.length ?? 0} total`}
+        actions={
+          <>
+            <HeaderAction href="/dashboard/customers/import" variant="secondary">
+              <Upload className="size-3.5" />
+              Import
+            </HeaderAction>
+            <HeaderAction href="/dashboard/customers/new">
+              <Plus className="size-4" />
+              Add Customer
+            </HeaderAction>
+          </>
+        }
+      />
 
-      <h1 className="mt-4 text-2xl font-semibold">Customers</h1>
-      <p className="mt-1 text-gray-600">{business.name}</p>
-
-      <Link
-        className="mt-4 inline-block rounded-md bg-black px-4 py-2 text-white"
-        href="/dashboard/customers/import"
-      >
-        Import CSV / Excel
-      </Link>
-
-      <CustomerForm
+      <CustomerList
         initialCustomers={customers ?? []}
         initialTags={tags ?? []}
         initialCustomerTags={customerTags ?? []}
       />
-    </main>
+    </div>
   );
 }
+

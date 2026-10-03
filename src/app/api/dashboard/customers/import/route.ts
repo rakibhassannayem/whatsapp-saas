@@ -73,5 +73,6 @@ export async function POST(request: Request) {
     .select("id");
 
   if (error) return databaseErrorResponse(error);
-  return Response.json({ addedCount: data?.length ?? 0 });
+  const customerIds = (data ?? []).map((row) => row.id);
+  return Response.json({ addedCount: customerIds.length, customerIds });
 }
