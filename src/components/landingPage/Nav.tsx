@@ -1,17 +1,18 @@
 import Link from "next/link";
 import { MessagesSquare } from "lucide-react";
+import NavUserMenu from "@/components/auth/NavUserMenu";
 
 const NAV = [
-  { label: "Why Broadcast", href: "#about" },
-  { label: "Features", href: "#features" },
-  { label: "Who It's For", href: "#industry" },
-  { label: "How It Works", href: "#how" },
-  { label: "Examples", href: "#demos" },
+  { label: "Home", href: "/" },
+  { label: "Features", href: "/#features" },
+  { label: "Who It's For", href: "/#industry" },
+  { label: "How It Works", href: "/#how" },
+  { label: "Examples", href: "/#demos" },
 ];
 
 export default function Nav() {
   return (
-    <div className="mx-auto max-w-6xl px-3 pt-4 sm:px-5">
+    <div className="relative z-50 mx-auto max-w-6xl px-3 pt-4 sm:px-5">
       <div className="flex items-center justify-between rounded-full border border-slate-200 bg-white py-2 pl-4 pr-2 shadow-sm">
         <Link href="/" className="flex items-center gap-2">
           <span className="flex size-7 items-center justify-center rounded-md bg-emerald-600 text-white">
@@ -28,9 +29,7 @@ export default function Nav() {
             </Link>
           ))}
         </nav>
-        <Link href="/signup" className="rounded-full bg-emerald-500 px-4 py-2 text-[12px] font-bold text-white hover:bg-emerald-600">
-          START BROADCASTING
-        </Link>
+        <NavUserMenu />
       </div>
     </div>
   );

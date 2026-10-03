@@ -1,11 +1,16 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import Link from "next/link";
+import { Eye, EyeOff, Lock, Mail, UserRound, UserPlus } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import AuthShell from "@/components/auth/AuthShell";
 
 export default function SignupPage() {
   const [message, setMessage] = useState("");
+  const [success, setSuccess] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -14,6 +19,7 @@ export default function SignupPage() {
     const formData = new FormData(form);
 
     setMessage("");
+    setSuccess(false);
     setBusy(true);
 
     const fullName = String(formData.get("fullName") ?? "");
@@ -37,58 +43,101 @@ export default function SignupPage() {
       return;
     }
 
-    setMessage("Signup হয়েছে। Email খুলে confirmation link-এ click করো।");
+    setSuccess(true);
+    setMessage("Account created! Open your email and click the confirmation link, then log in to send your first broadcast.");
     form.reset();
   }
 
   return (
-    <main className="mx-auto max-w-md p-8">
-      <h1 className="mb-6 text-2xl font-semibold">Create an account</h1>
-
+    <AuthShell
+      title="Start broadcasting today"
+      subtitle="Create your free account — import your customer list and send one Eid offer to everyone at once."
+      footer={
+        <>
+          Already have an account?{" "}
+          <Link href="/login" className="font-semibold text-emerald-600 hover:text-emerald-700">
+            Log in
+          </Link>{" "}
+          to continue broadcasting.
+        </>
+      }
+    >
       <form className="space-y-4" onSubmit={handleSubmit}>
         <label className="block">
-          <span className="mb-1 block">Full name</span>
-          <input
-            className="w-full rounded border p-2"
-            name="fullName"
-            autoComplete="name"
-            required
-          />
+          <span className="mb-1.5 block text-[13px] font-semibold text-slate-700">Full name</span>
+          <span className="relative block">
+            <UserRound className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+            <input
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-3 text-[14px] outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-100"
+              name="fullName"
+              autoComplete="name"
+              placeholder="e.g. Rahim Uddin"
+              required
+            />
+          </span>
         </label>
 
         <label className="block">
-          <span className="mb-1 block">Email</span>
-          <input
-            className="w-full rounded border p-2"
-            name="email"
-            type="email"
-            autoComplete="email"
-            required
-          />
+          <span className="mb-1.5 block text-[13px] font-semibold text-slate-700">Email</span>
+          <span className="relative block">
+            <Mail className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+            <input
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-3 text-[14px] outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-100"
+              name="email"
+              type="email"
+              autoComplete="email"
+              placeholder="you@shop.com"
+              required
+            />
+          </span>
         </label>
 
         <label className="block">
-          <span className="mb-1 block">Password</span>
-          <input
-            className="w-full rounded border p-2"
-            name="password"
-            type="password"
-            autoComplete="new-password"
-            minLength={8}
-            required
-          />
+          <span className="mb-1.5 block text-[13px] font-semibold text-slate-700">Password</span>
+          <span className="relative block">
+            <Lock className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+            <input
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-11 text-[14px] outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-100"
+              name="password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="new-password"
+              minLength={8}
+              placeholder="Min. 8 characters"
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+            </button>
+          </span>
         </label>
 
         <button
-          className="rounded bg-black px-4 py-2 text-white disabled:opacity-50"
+          className="flex w-full items-center justify-center gap-2 rounded-full bg-emerald-500 px-4 py-2.5 text-[13px] font-bold text-white transition hover:bg-emerald-600 disabled:opacity-50"
           type="submit"
           disabled={busy}
         >
-          {busy ? "Creating account..." : "Sign up"}
+          <UserPlus className="size-4" />
+          {busy ? "Creating account..." : "Sign up & Start Broadcast"}
         </button>
       </form>
 
-      {message && <p className="mt-4">{message}</p>}
-    </main>
+      {message && (
+        <p
+          className={
+            success
+              ? "mt-4 rounded-xl bg-emerald-50 px-4 py-2.5 text-[13px] leading-5 text-emerald-700"
+              : "mt-4 rounded-xl bg-red-50 px-4 py-2.5 text-[13px] leading-5 text-red-600"
+          }
+        >
+          {message}
+        </p>
+      )}
+    </AuthShell>
   );
 }
+
