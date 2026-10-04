@@ -43,7 +43,7 @@ export function useCustomerActions(
     notify("");
     setBusy(true);
     const { error } = await dashboardApiRequest<{ success: boolean }>(
-      "/api/dashboard/customer-tags",
+      "/api/dashboard/customers/tags",
       { method: "POST", body: { customerId, tagId } }
     );
     setBusy(false);
@@ -59,7 +59,7 @@ export function useCustomerActions(
     notify("");
     setBusy(true);
     const { error } = await dashboardApiRequest<{ success: boolean }>(
-      "/api/dashboard/customer-tags",
+      "/api/dashboard/customers/tags",
       { method: "DELETE", body: { customerId, tagId } }
     );
     setBusy(false);

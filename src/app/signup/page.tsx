@@ -4,7 +4,7 @@ import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { Eye, EyeOff, Lock, Mail, UserRound, UserPlus } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import AuthShell from "@/components/auth/AuthShell";
+import AuthShell from "@/components/auth/auth-shell";
 
 export default function SignupPage() {
   const [message, setMessage] = useState("");
@@ -140,4 +140,3 @@ export default function SignupPage() {
     </AuthShell>
   );
 }
-

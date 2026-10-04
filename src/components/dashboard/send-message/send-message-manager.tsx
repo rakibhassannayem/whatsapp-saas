@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import CampaignAudienceManager from "../campaigns/[campaignId]/campaign-audience-manager";
+import CampaignAudienceManager from "../campaigns/campaign-details/campaign-audience-manager";
 
 type Campaign = {
   id: string;

@@ -1,5 +1,14 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Project Structure
+
+- `src/app/` contains Next.js route entry points, layouts, and API route handlers.
+- `src/components/pages/` groups each page implementation and its page-specific components by route, such as `customers/new` and `campaigns/campaign-details`.
+- `src/components/auth/` and `src/components/dashboard/` contain components shared across pages; `src/components/ui/` contains reusable UI primitives.
+- `src/lib/` contains shared clients and utilities.
+
+Keep page implementations in `src/components/pages/<page-name>/` and have the matching `src/app/` `page.tsx` import them. Group API route handlers by feature under `src/app/api/dashboard/<feature>/`; keep CRUD methods for a resource in its `route.ts` and nest related resources, such as customer tags under `customers/tags` and campaign recipients under `campaigns/recipients`.
+
 ## Getting Started
 
 First, run the development server:

@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { Plus, Upload } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import PageHeader, { HeaderAction } from "@/components/dashboard/page-header";
-import CustomerList from "@/components/dashboard/customer-list";
+import CustomerList from "@/components/dashboard/customers/customer-list";
 
 export default async function CustomersPage() {
   const supabase = await createClient();
@@ -34,7 +34,10 @@ export default async function CustomersPage() {
   if (!business) {
     return (
       <div>
-        <PageHeader title="Customers" subtitle="Create a business to manage customers." />
+        <PageHeader
+          title="Customers"
+          subtitle="Create a business to manage customers."
+        />
         <Link
           className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-emerald-500 px-4 py-2 text-[12px] font-bold text-white transition hover:bg-emerald-600"
           href="/onboarding"
@@ -102,7 +105,10 @@ export default async function CustomersPage() {
         subtitle={`${business.name} • ${customers?.length ?? 0} total`}
         actions={
           <>
-            <HeaderAction href="/dashboard/customers/import" variant="secondary">
+            <HeaderAction
+              href="/dashboard/customers/import"
+              variant="secondary"
+            >
               <Upload className="size-3.5" />
               Import
             </HeaderAction>
@@ -122,4 +128,3 @@ export default async function CustomersPage() {
     </div>
   );
 }
-

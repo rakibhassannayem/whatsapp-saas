@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import CampaignsManager from "./campaigns-manager";
+import CampaignsManager from "@/components/dashboard/campaigns/campaigns-manager";
 
 export default async function CampaignsPage() {
   const supabase = await createClient();

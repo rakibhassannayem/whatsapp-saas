@@ -254,7 +254,7 @@ export default function CustomerImporter({
     const { data, error } = await dashboardApiRequest<{
       addedCount: number;
       skippedCount: number;
-    }>("/api/dashboard/customer-tags", {
+    }>("/api/dashboard/customers/tags", {
       method: "POST",
       body: { tagId: importedTagId, customerIds: importedIds },
     });

@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { UserPlus } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import PageHeader from "@/components/dashboard/page-header";
-import CustomerImporter from "./customer-import";
+import CustomerImporter from "@/components/dashboard/customers/import/customer-import";
 
 export default async function ImportCustomersPage() {
   const supabase = await createClient();
@@ -23,8 +23,13 @@ export default async function ImportCustomersPage() {
   if (error) {
     return (
       <div>
-        <PageHeader title="Import customers" subtitle="Could not load business." />
-        <p className="mt-4 rounded-xl bg-red-50 px-4 py-2.5 text-[13px] text-red-600">{error.message}</p>
+        <PageHeader
+          title="Import customers"
+          subtitle="Could not load business."
+        />
+        <p className="mt-4 rounded-xl bg-red-50 px-4 py-2.5 text-[13px] text-red-600">
+          {error.message}
+        </p>
       </div>
     );
   }
@@ -32,7 +37,10 @@ export default async function ImportCustomersPage() {
   if (!business) {
     return (
       <div>
-        <PageHeader title="Import customers" subtitle="Create a business first." />
+        <PageHeader
+          title="Import customers"
+          subtitle="Create a business first."
+        />
         <Link
           className="mt-4 inline-flex items-center rounded-full bg-emerald-500 px-4 py-2 text-[12px] font-bold text-white transition hover:bg-emerald-600"
           href="/onboarding"

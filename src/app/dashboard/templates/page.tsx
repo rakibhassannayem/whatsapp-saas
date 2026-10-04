@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import TemplatesManager from "./templates-manager";
+import TemplatesManager from "@/components/dashboard/templates/templates-manager";
 
 export default async function TemplatesPage() {
   const supabase = await createClient();

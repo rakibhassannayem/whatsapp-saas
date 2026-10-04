@@ -54,7 +54,7 @@ export default function CampaignAudienceManager({
     setBusy(true);
 
     const { error } = await dashboardApiRequest<{ success: boolean }>(
-      "/api/dashboard/campaign-recipients",
+      "/api/dashboard/campaigns/recipients",
       shouldSelect
         ? {
             method: "POST",
@@ -114,7 +114,7 @@ export default function CampaignAudienceManager({
     setBusy(true);
 
     const { error } = await dashboardApiRequest<{ success: boolean }>(
-      "/api/dashboard/campaign-recipients",
+      "/api/dashboard/campaigns/recipients",
       {
         method: "POST",
         body: { campaignId, customerIds: customerIdsToAdd },
@@ -151,7 +151,7 @@ export default function CampaignAudienceManager({
     setBusy(true);
 
     const { error } = await dashboardApiRequest<{ success: boolean }>(
-      "/api/dashboard/campaign-recipients",
+      "/api/dashboard/campaigns/recipients",
       {
         method: "POST",
         body: {
@@ -190,7 +190,7 @@ export default function CampaignAudienceManager({
     setBusy(true);
 
     const { error } = await dashboardApiRequest<{ success: boolean }>(
-      "/api/dashboard/campaign-recipients",
+      "/api/dashboard/campaigns/recipients",
       { method: "DELETE", body: { campaignId } },
     );
 

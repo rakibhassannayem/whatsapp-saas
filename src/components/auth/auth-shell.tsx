@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { CheckCheck, Megaphone, MessagesSquare } from "lucide-react";
 import type { ReactNode } from "react";
-import Nav from "@/components/landingPage/Nav";
+import Nav from "@/components/home/nav";
 
 const BULLETS = [
   "Upload your Excel customer list once",
@@ -36,7 +36,8 @@ export default function AuthShell({
               </span>
             </Link>
             <span className="mt-6 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-[11px] font-semibold text-emerald-200">
-              <Megaphone className="size-3.5" /> No bot • No auto-reply • Just broadcast
+              <Megaphone className="size-3.5" /> No bot • No auto-reply • Just
+              broadcast
             </span>
             <h2 className="mt-4 text-3xl font-extrabold leading-tight">
               One custom msg.
@@ -47,16 +48,22 @@ export default function AuthShell({
             </h2>
             <ul className="mt-6 space-y-2.5">
               {BULLETS.map((b) => (
-                <li key={b} className="flex items-start gap-2 text-[13px] leading-5 text-emerald-50/85">
+                <li
+                  key={b}
+                  className="flex items-start gap-2 text-[13px] leading-5 text-emerald-50/85"
+                >
                   <CheckCheck className="mt-0.5 size-4 shrink-0 text-emerald-400" />
                   {b}
                 </li>
               ))}
             </ul>
             <div className="mt-6 max-w-sm rounded-2xl bg-white/10 p-4">
-              <p className="text-[11px] font-bold text-emerald-200">EID OFFER • TO: VIP (342)</p>
+              <p className="text-[11px] font-bold text-emerald-200">
+                EID OFFER • TO: VIP (342)
+              </p>
               <div className="mt-2 rounded-xl rounded-tr-none bg-[#dcf8c6] p-3 text-[12px] leading-5 text-slate-800 shadow">
-                Assalamu Alaikum Rahim! Eid Mubarak — Flat <b>20% OFF</b> till Friday.
+                Assalamu Alaikum Rahim! Eid Mubarak — Flat <b>20% OFF</b> till
+                Friday.
               </div>
               <p className="mt-2 text-[11px] text-emerald-200/70">
                 Eid Campaign • Discount Blast • Due Reminder
@@ -66,10 +73,16 @@ export default function AuthShell({
 
           {/* Right: form panel */}
           <div className="bg-white p-8 sm:p-10">
-            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">{title}</h1>
-            <p className="mt-1.5 text-[13px] leading-5 text-slate-500">{subtitle}</p>
+            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">
+              {title}
+            </h1>
+            <p className="mt-1.5 text-[13px] leading-5 text-slate-500">
+              {subtitle}
+            </p>
             <div className="mt-6">{children}</div>
-            <div className="mt-6 border-t border-slate-100 pt-5 text-[13px] text-slate-500">{footer}</div>
+            <div className="mt-6 border-t border-slate-100 pt-5 text-[13px] text-slate-500">
+              {footer}
+            </div>
           </div>
         </div>
         <p className="mt-4 text-center text-[12px] text-slate-400">

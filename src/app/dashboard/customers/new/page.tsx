@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import PageHeader from "@/components/dashboard/page-header";
-import AddCustomerTabs from "./add-customer-tabs";
+import AddCustomerTabs from "@/components/dashboard/customers/new/add-customer-tabs";
 
 export default async function NewCustomerPage() {
   const supabase = await createClient();

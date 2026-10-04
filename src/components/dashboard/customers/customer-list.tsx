@@ -92,7 +92,7 @@ export default function CustomerList({
       const { data, error } = await dashboardApiRequest<{
         addedCount: number;
         skippedCount: number;
-      }>("/api/dashboard/customer-tags", {
+      }>("/api/dashboard/customers/tags", {
         method: "POST",
         body: { tagId, customerIds: batch },
       });
@@ -120,7 +120,7 @@ export default function CustomerList({
     let removed = 0;
     for (const batch of chunkIds(customerIds)) {
       const { data, error } = await dashboardApiRequest<{ removedCount: number }>(
-        "/api/dashboard/customer-tags",
+        "/api/dashboard/customers/tags",
         { method: "DELETE", body: { tagId, customerIds: batch } }
       );
       if (error) {

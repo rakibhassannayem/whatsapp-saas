@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { MessagesSquare } from "lucide-react";
-import NavUserMenu from "@/components/auth/NavUserMenu";
+import NavUserMenu from "@/components/auth/nav-user-menu";
 
 const NAV = [
   { label: "Home", href: "/" },
@@ -36,4 +36,3 @@ export default function Nav() {
     </div>
   );
 }
-

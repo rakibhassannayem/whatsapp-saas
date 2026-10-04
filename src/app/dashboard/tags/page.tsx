@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import TagsManager from "./tags-manager";
+import TagsManager from "@/components/dashboard/tags/tags-manager";
 
 export default async function TagsPage() {
   const supabase = await createClient();

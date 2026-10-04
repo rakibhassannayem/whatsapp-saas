@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Lock, LogIn, Mail } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import AuthShell from "@/components/auth/AuthShell";
+import AuthShell from "@/components/auth/auth-shell";
 
 export default function LoginPage() {
   const router = useRouter();

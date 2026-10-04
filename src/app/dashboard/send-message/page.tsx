@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import SendMessageManager from "./send-message-manager";
+import SendMessageManager from "@/components/dashboard/send-message/send-message-manager";
 
 export default async function SendMessagePage() {
   const supabase = await createClient();
@@ -97,9 +97,7 @@ export default async function SendMessagePage() {
 
     if (error) {
       return (
-        <main className="p-8">
-          Audience load করতে সমস্যা: {error.message}
-        </main>
+        <main className="p-8">Audience load করতে সমস্যা: {error.message}</main>
       );
     }
 
