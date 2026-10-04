@@ -12,8 +12,9 @@ const NAV = [
 
 export default function Nav() {
   return (
-    <div className="relative z-50 mx-auto max-w-6xl px-3 pt-4 sm:px-5">
-      <div className="flex items-center justify-between rounded-full border border-slate-200 bg-white py-2 pl-4 pr-2 shadow-sm">
+    <div className="sticky top-0 z-50 bg-white/80 py-3 backdrop-blur-md">
+      <div className="mx-auto max-w-6xl px-3 sm:px-5">
+      <div className="flex items-center justify-between rounded-full border border-slate-200 bg-white/90 py-2 pl-4 pr-2 shadow-sm backdrop-blur-md">
         <Link href="/" className="flex items-center gap-2">
           <span className="flex size-7 items-center justify-center rounded-md bg-emerald-600 text-white">
             <MessagesSquare className="size-4" />
@@ -30,6 +31,7 @@ export default function Nav() {
           ))}
         </nav>
         <NavUserMenu />
+      </div>
       </div>
     </div>
   );

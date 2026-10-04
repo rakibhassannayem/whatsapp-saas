@@ -49,6 +49,33 @@ export default async function TagsPage() {
     );
   }
 
+  const { data: customers, error: customersError } = await supabase
+    .from("customers")
+    .select("id, full_name, phone_e164, email")
+    .eq("business_id", business.id)
+    .order("full_name", { ascending: true });
+
+  if (customersError) {
+    return (
+      <main className="p-8">
+        Customers load করতে সমস্যা: {customersError.message}
+      </main>
+    );
+  }
+
+  const { data: customerTags, error: customerTagsError } = await supabase
+    .from("customer_tags")
+    .select("customer_id, tag_id")
+    .eq("business_id", business.id);
+
+  if (customerTagsError) {
+    return (
+      <main className="p-8">
+        Customer tags load করতে সমস্যা: {customerTagsError.message}
+      </main>
+    );
+  }
+
   return (
     <main className="mx-auto max-w-6xl p-6 sm:p-8">
       <Link className="text-sm underline" href="/dashboard">
@@ -58,7 +85,11 @@ export default async function TagsPage() {
       <h1 className="mt-4 text-2xl font-semibold">Tags</h1>
       <p className="mt-1 text-gray-600">{business.name}</p>
 
-      <TagsManager initialTags={tags ?? []} />
+      <TagsManager
+        initialTags={tags ?? []}
+        initialCustomers={customers ?? []}
+        initialCustomerTags={customerTags ?? []}
+      />
     </main>
   );
 }

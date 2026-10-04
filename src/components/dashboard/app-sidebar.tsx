@@ -5,8 +5,9 @@ import { usePathname } from "next/navigation";
 import {
   FileText,
   LayoutDashboard,
-  Megaphone,
   MessagesSquare,
+  Megaphone,
+  Send,
   Tags,
   Upload,
   UsersRound,
@@ -40,7 +41,13 @@ const GROUPS: {
     label: "Broadcast",
     items: [
       {
-        label: "Announcements",
+        label: "Send message",
+        href: "/dashboard/send-message",
+        icon: Send,
+        match: (p) => p === "/dashboard/send-message",
+      },
+      {
+        label: "Campaigns",
         href: "/dashboard/campaigns",
         icon: Megaphone,
         match: (p) => p.startsWith("/dashboard/campaigns"),
@@ -121,7 +128,7 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
 export function SidebarContent({ user, onNavigate }: { user: DashboardUser; onNavigate?: () => void }) {
   return (
     <div className="flex h-full flex-col px-4 py-6">
-      <Link href="/dashboard" onClick={onNavigate} className="flex items-center gap-2 px-2">
+      <Link href="/" onClick={onNavigate} className="flex items-center gap-2 px-2">
         <span className="flex size-8 items-center justify-center rounded-lg bg-emerald-600 text-white">
           <MessagesSquare className="size-4" />
         </span>

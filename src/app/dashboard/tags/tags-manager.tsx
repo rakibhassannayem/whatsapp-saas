@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import { dashboardApiRequest } from "@/lib/dashboard-api";
 
 type Tag = {
@@ -9,14 +9,74 @@ type Tag = {
   created_at: string;
 };
 
-type TagsManagerProps = {
-  initialTags: Tag[];
+type Customer = {
+  id: string;
+  full_name: string;
+  phone_e164: string;
+  email: string | null;
 };
 
-export default function TagsManager({ initialTags }: TagsManagerProps) {
+type CustomerTag = {
+  customer_id: string;
+  tag_id: string;
+};
+
+type TagsManagerProps = {
+  initialTags: Tag[];
+  initialCustomers: Customer[];
+  initialCustomerTags: CustomerTag[];
+};
+
+const MAX_CUSTOMERS_PER_REQUEST = 1000;
+
+function chunkIds(ids: string[]): string[][] {
+  const batches: string[][] = [];
+  for (let index = 0; index < ids.length; index += MAX_CUSTOMERS_PER_REQUEST) {
+    batches.push(ids.slice(index, index + MAX_CUSTOMERS_PER_REQUEST));
+  }
+  return batches;
+}
+
+export default function TagsManager({
+  initialTags,
+  initialCustomers,
+  initialCustomerTags,
+}: TagsManagerProps) {
   const [tags, setTags] = useState(initialTags);
+  const [customerTags, setCustomerTags] = useState(initialCustomerTags);
+  const [selectedTagId, setSelectedTagId] = useState("");
+  const [selectedCustomerIds, setSelectedCustomerIds] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const [customerSearch, setCustomerSearch] = useState("");
+  const [showAssignment, setShowAssignment] = useState(false);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+
+  const taggedCustomerIds = useMemo(
+    () =>
+      new Set(
+        customerTags
+          .filter((item) => item.tag_id === selectedTagId)
+          .map((item) => item.customer_id),
+      ),
+    [customerTags, selectedTagId],
+  );
+
+  const filteredCustomers = useMemo(() => {
+    const query = customerSearch.trim().toLowerCase();
+    if (!query) return initialCustomers;
+    return initialCustomers.filter(
+      (customer) =>
+        customer.full_name.toLowerCase().includes(query) ||
+        customer.phone_e164.toLowerCase().includes(query) ||
+        (customer.email?.toLowerCase().includes(query) ?? false),
+    );
+  }, [customerSearch, initialCustomers]);
+
+  const availableCustomerCount = initialCustomers.filter(
+    (customer) => !taggedCustomerIds.has(customer.id),
+  ).length;
 
   async function handleCreate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -70,7 +130,84 @@ export default function TagsManager({ initialTags }: TagsManagerProps) {
     }
 
     setTags((current) => current.filter((item) => item.id !== tag.id));
+    if (selectedTagId === tag.id) {
+      setSelectedTagId("");
+      setSelectedCustomerIds(new Set());
+    }
     setMessage("Tag delete হয়েছে।");
+  }
+
+  function handleToggleCustomer(customerId: string, shouldSelect: boolean) {
+    setSelectedCustomerIds((current) => {
+      const next = new Set(current);
+      if (shouldSelect) {
+        next.add(customerId);
+      } else {
+        next.delete(customerId);
+      }
+      return next;
+    });
+  }
+
+  async function handleApplyTag() {
+    if (!selectedTagId || selectedCustomerIds.size === 0) return;
+
+    setMessage("");
+    setBusy(true);
+    let addedCount = 0;
+    let skippedCount = 0;
+    const customerIds = [...selectedCustomerIds];
+
+    for (const batch of chunkIds(customerIds)) {
+      const { data, error } = await dashboardApiRequest<{
+        addedCount: number;
+        skippedCount: number;
+      }>("/api/dashboard/customer-tags", {
+        method: "POST",
+        body: { tagId: selectedTagId, customerIds: batch },
+      });
+
+      if (error) {
+        setBusy(false);
+        setMessage(
+          addedCount > 0
+            ? `Tag applied to ${addedCount} customers before an error: ${error}`
+            : error,
+        );
+        return;
+      }
+
+      addedCount += data?.addedCount ?? batch.length;
+      skippedCount += data?.skippedCount ?? 0;
+      setCustomerTags((current) => {
+        const existingIds = new Set(
+          current
+            .filter((item) => item.tag_id === selectedTagId)
+            .map((item) => item.customer_id),
+        );
+        return [
+          ...current,
+          ...batch
+            .filter((customerId) => !existingIds.has(customerId))
+            .map((customerId) => ({
+              customer_id: customerId,
+              tag_id: selectedTagId,
+            })),
+        ];
+      });
+      setSelectedCustomerIds((current) => {
+        const next = new Set(current);
+        batch.forEach((customerId) => next.delete(customerId));
+        return next;
+      });
+    }
+
+    setBusy(false);
+    setMessage(
+      skippedCount > 0
+        ? `Tag applied to ${addedCount} customers. ${skippedCount} already had it.`
+        : `Tag applied to ${addedCount} customer${addedCount === 1 ? "" : "s"}.`,
+    );
   }
 
   return (
@@ -105,6 +242,175 @@ export default function TagsManager({ initialTags }: TagsManagerProps) {
             {busy ? "Saving..." : "Create tag"}
           </button>
         </form>
+      </section>
+
+      <section className="mt-8 rounded-xl border bg-white p-5 shadow-sm">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-lg font-semibold">Add customers to a tag</h2>
+            <p className="mt-1 text-sm text-gray-600">
+              Choose a tag, then select individual customers or all available
+              customers.
+            </p>
+          </div>
+          <button
+            className="shrink-0 rounded-md border px-4 py-2 text-sm font-medium disabled:opacity-50"
+            type="button"
+            onClick={() => setShowAssignment((current) => !current)}
+            disabled={tags.length === 0 || initialCustomers.length === 0}
+            aria-expanded={showAssignment}
+          >
+            {showAssignment ? "Close" : "Add customers to tag"}
+          </button>
+        </div>
+
+        {tags.length === 0 && (
+          <p className="mt-3 text-sm text-gray-600">
+            Create a tag first to assign customers.
+          </p>
+        )}
+        {initialCustomers.length === 0 && tags.length > 0 && (
+          <p className="mt-3 text-sm text-gray-600">
+            Add or import customers first to assign a tag.
+          </p>
+        )}
+
+        {showAssignment && tags.length > 0 && initialCustomers.length > 0 && (
+          <div className="mt-5 border-t pt-5">
+            <label
+              className="block text-sm font-medium"
+              htmlFor="assignment-tag"
+            >
+              Choose tag
+            </label>
+            <select
+              className="mt-2 w-full rounded-md border bg-white p-2 sm:max-w-sm"
+              id="assignment-tag"
+              value={selectedTagId}
+              disabled={busy}
+              onChange={(event) => {
+                setSelectedTagId(event.target.value);
+                setSelectedCustomerIds(new Set());
+                setMessage("");
+              }}
+            >
+              <option value="">Select a tag</option>
+              {tags.map((tag) => (
+                <option key={tag.id} value={tag.id}>
+                  {tag.name}
+                </option>
+              ))}
+            </select>
+
+            {selectedTagId && (
+              <>
+                <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-sm text-gray-600">
+                    {selectedCustomerIds.size} selected ·{" "}
+                    {availableCustomerCount} not yet tagged
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      className="rounded-md border px-3 py-2 text-sm disabled:opacity-50"
+                      type="button"
+                      disabled={busy || availableCustomerCount === 0}
+                      onClick={() =>
+                        setSelectedCustomerIds(
+                          new Set(
+                            initialCustomers
+                              .filter(
+                                (customer) =>
+                                  !taggedCustomerIds.has(customer.id),
+                              )
+                              .map((customer) => customer.id),
+                          ),
+                        )
+                      }
+                    >
+                      Select all available
+                    </button>
+                    <button
+                      className="rounded-md border px-3 py-2 text-sm disabled:opacity-50"
+                      type="button"
+                      disabled={busy || selectedCustomerIds.size === 0}
+                      onClick={() => setSelectedCustomerIds(new Set())}
+                    >
+                      Clear selection
+                    </button>
+                  </div>
+                </div>
+
+                <label className="sr-only" htmlFor="customer-search">
+                  Search customers
+                </label>
+                <input
+                  className="mt-4 w-full rounded-md border p-2"
+                  id="customer-search"
+                  placeholder="Search name, phone, or email"
+                  value={customerSearch}
+                  onChange={(event) => setCustomerSearch(event.target.value)}
+                />
+
+                <ul className="mt-3 max-h-96 divide-y overflow-y-auto rounded-md border">
+                  {filteredCustomers.map((customer) => {
+                    const alreadyTagged = taggedCustomerIds.has(customer.id);
+                    const checked =
+                      alreadyTagged || selectedCustomerIds.has(customer.id);
+
+                    return (
+                      <li className="p-3" key={customer.id}>
+                        <label className="flex cursor-pointer items-start gap-3">
+                          <input
+                            className="mt-1 size-4"
+                            type="checkbox"
+                            checked={checked}
+                            disabled={busy || alreadyTagged}
+                            onChange={(event) =>
+                              handleToggleCustomer(
+                                customer.id,
+                                event.target.checked,
+                              )
+                            }
+                          />
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-sm font-medium">
+                              {customer.full_name}
+                              {alreadyTagged && (
+                                <span className="ml-2 text-xs font-normal text-gray-500">
+                                  Already tagged
+                                </span>
+                              )}
+                            </span>
+                            <span className="block truncate text-xs text-gray-600">
+                              {customer.phone_e164}
+                              {customer.email ? ` · ${customer.email}` : ""}
+                            </span>
+                          </span>
+                        </label>
+                      </li>
+                    );
+                  })}
+                  {filteredCustomers.length === 0 && (
+                    <li className="p-4 text-sm text-gray-600">
+                      No customers match your search.
+                    </li>
+                  )}
+                </ul>
+
+                <button
+                  className="mt-4 rounded-md bg-black px-4 py-2 text-sm text-white disabled:opacity-50"
+                  type="button"
+                  disabled={busy || selectedCustomerIds.size === 0}
+                  onClick={() => void handleApplyTag()}
+                >
+                  {busy
+                    ? "Applying..."
+                    : `Apply tag to ${selectedCustomerIds.size} selected`}
+                </button>
+              </>
+            )}
+          </div>
+        )}
       </section>
 
       <section className="mt-8">
