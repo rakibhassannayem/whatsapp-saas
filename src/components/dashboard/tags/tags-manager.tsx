@@ -2,7 +2,7 @@
 
 import { useMemo, useState, type FormEvent } from "react";
 import { dashboardApiRequest } from "@/lib/dashboard-api";
-import type { Customer, CustomerTag, Tag, TagsManagerProps } from "@/types/customer";
+import type { Tag, TagsManagerProps } from "@/types/customer";
 
 const MAX_CUSTOMERS_PER_REQUEST = 1000;
 
@@ -86,7 +86,7 @@ export default function TagsManager({
 
   async function handleDelete(tag: Tag) {
     const confirmed = window.confirm(
-      `"${tag.name}" tag delete হবে এবং customer-দের সঙ্গে এর সংযোগও মুছে যাবে।`,
+      `Delete the tag "${tag.name}"? This will also remove it from all customers.`,
     );
 
     if (!confirmed) return;
@@ -189,10 +189,10 @@ export default function TagsManager({
 
   return (
     <>
-      <section className="mt-8 rounded-xl border bg-white p-5 shadow-sm">
-        <h2 className="text-lg font-semibold">নতুন tag তৈরি করো</h2>
-        <p className="mt-1 text-sm text-gray-600">
-          Customer-দের পরে চেনার জন্য tag ব্যবহার করো, যেমন VIP বা নতুন ক্রেতা।
+      <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="text-[15px] font-bold text-slate-950">Create a New Tag</h2>
+        <p className="mt-1 text-[13px] text-slate-500">
+          Use tags to group customers — for example &quot;VIP&quot;, &quot;New Customer&quot;, or &quot;Inactive&quot;.
         </p>
 
         <form
@@ -200,55 +200,54 @@ export default function TagsManager({
           onSubmit={handleCreate}
         >
           <label className="sr-only" htmlFor="tag-name">
-            Tag-এর নাম
+            Tag name
           </label>
           <input
-            className="min-w-0 flex-1 rounded-md border p-2"
+            className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-[13px] outline-none transition focus:border-emerald-400 focus:bg-white focus:ring-2 focus:ring-emerald-100"
             id="tag-name"
             name="name"
-            placeholder="যেমন: VIP"
+            placeholder="e.g. VIP, New Customer"
             maxLength={50}
             required
           />
 
           <button
-            className="rounded-md bg-black px-4 py-2 text-white disabled:opacity-50"
+            className="rounded-full bg-emerald-500 px-5 py-2 text-[13px] font-bold text-white transition hover:bg-emerald-600 disabled:opacity-50"
             type="submit"
             disabled={busy}
           >
-            {busy ? "Saving..." : "Create tag"}
+            {busy ? "Saving…" : "Create tag"}
           </button>
         </form>
       </section>
 
-      <section className="mt-8 rounded-xl border bg-white p-5 shadow-sm">
+      <section className="mt-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-lg font-semibold">Add customers to a tag</h2>
-            <p className="mt-1 text-sm text-gray-600">
-              Choose a tag, then select individual customers or all available
-              customers.
+            <h2 className="text-[15px] font-bold text-slate-950">Assign Customers to a Tag</h2>
+            <p className="mt-1 text-[13px] text-slate-500">
+              Pick a tag, then select which customers should belong to it.
             </p>
           </div>
           <button
-            className="shrink-0 rounded-md border px-4 py-2 text-sm font-medium disabled:opacity-50"
+            className="shrink-0 rounded-full border border-slate-200 px-4 py-2 text-[12px] font-bold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
             type="button"
             onClick={() => setShowAssignment((current) => !current)}
             disabled={tags.length === 0 || initialCustomers.length === 0}
             aria-expanded={showAssignment}
           >
-            {showAssignment ? "Close" : "Add customers to tag"}
+            {showAssignment ? "Close" : "Assign customers"}
           </button>
         </div>
 
         {tags.length === 0 && (
-          <p className="mt-3 text-sm text-gray-600">
-            Create a tag first to assign customers.
+          <p className="mt-3 text-[13px] text-slate-500">
+            Create a tag first before assigning customers.
           </p>
         )}
         {initialCustomers.length === 0 && tags.length > 0 && (
-          <p className="mt-3 text-sm text-gray-600">
-            Add or import customers first to assign a tag.
+          <p className="mt-3 text-[13px] text-slate-500">
+            Add or import customers first so you can assign tags.
           </p>
         )}
 
@@ -429,7 +428,7 @@ export default function TagsManager({
 
       {message && (
         <p
-          className="mt-4 rounded-md border bg-white p-3 text-sm"
+          className="mt-4 rounded-xl border border-slate-200 bg-white px-4 py-3 text-[13px] text-slate-700"
           role="status"
         >
           {message}

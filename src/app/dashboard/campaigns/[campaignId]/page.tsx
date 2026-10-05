@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { ArrowLeft, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import PageHeader, { HeaderAction } from "@/components/dashboard/page-header";
 import CampaignAudienceManager from "@/components/dashboard/campaigns/campaign-details/campaign-audience-manager";
 import type { CampaignAudiencePageProps } from "@/types/campaign";
 
@@ -24,9 +26,12 @@ export default async function CampaignAudiencePage({
 
   if (businessError) {
     return (
-      <main className="p-8">
-        Business load করতে সমস্যা: {businessError.message}
-      </main>
+      <div>
+        <PageHeader title="Campaign Audience" />
+        <p className="mt-4 rounded-xl bg-red-50 px-4 py-2.5 text-[13px] text-red-600">
+          Could not load business: {businessError.message}
+        </p>
+      </div>
     );
   }
 
@@ -43,9 +48,12 @@ export default async function CampaignAudiencePage({
 
   if (campaignError) {
     return (
-      <main className="p-8">
-        Campaign load করতে সমস্যা: {campaignError.message}
-      </main>
+      <div>
+        <PageHeader title="Campaign Audience" subtitle={business.name} />
+        <p className="mt-4 rounded-xl bg-red-50 px-4 py-2.5 text-[13px] text-red-600">
+          Could not load campaign: {campaignError.message}
+        </p>
+      </div>
     );
   }
 
@@ -81,51 +89,89 @@ export default async function CampaignAudiencePage({
 
   if (customersError) {
     return (
-      <main className="p-8">
-        Customers load করতে সমস্যা: {customersError.message}
-      </main>
+      <div>
+        <PageHeader title={campaign.name} subtitle={business.name} />
+        <p className="mt-4 rounded-xl bg-red-50 px-4 py-2.5 text-[13px] text-red-600">
+          Could not load customers: {customersError.message}
+        </p>
+      </div>
     );
   }
 
   if (recipientsError) {
     return (
-      <main className="p-8">
-        Audience load করতে সমস্যা: {recipientsError.message}
-      </main>
+      <div>
+        <PageHeader title={campaign.name} subtitle={business.name} />
+        <p className="mt-4 rounded-xl bg-red-50 px-4 py-2.5 text-[13px] text-red-600">
+          Could not load audience: {recipientsError.message}
+        </p>
+      </div>
     );
   }
 
   if (tagsError) {
     return (
-      <main className="p-8">Tags load করতে সমস্যা: {tagsError.message}</main>
+      <div>
+        <PageHeader title={campaign.name} subtitle={business.name} />
+        <p className="mt-4 rounded-xl bg-red-50 px-4 py-2.5 text-[13px] text-red-600">
+          Could not load tags: {tagsError.message}
+        </p>
+      </div>
     );
   }
 
   if (customerTagsError) {
     return (
-      <main className="p-8">
-        Customer tags load করতে সমস্যা: {customerTagsError.message}
-      </main>
+      <div>
+        <PageHeader title={campaign.name} subtitle={business.name} />
+        <p className="mt-4 rounded-xl bg-red-50 px-4 py-2.5 text-[13px] text-red-600">
+          Could not load customer tags: {customerTagsError.message}
+        </p>
+      </div>
     );
   }
 
+  const audienceCount = recipients?.length ?? 0;
+
   return (
-    <main className="mx-auto max-w-6xl p-6 sm:p-8">
-      <Link className="text-sm underline" href="/dashboard/campaigns">
-        ← Campaigns
-      </Link>
+    <div>
+      <div className="mb-4">
+        <Link
+          href="/dashboard/campaigns"
+          className="inline-flex items-center gap-1.5 text-[13px] font-medium text-slate-500 transition hover:text-slate-700"
+        >
+          <ArrowLeft className="size-3.5" />
+          Back to Campaigns
+        </Link>
+      </div>
 
-      <h1 className="mt-4 text-2xl font-semibold">{campaign.name}</h1>
-      <p className="mt-1 text-gray-600">
-        {business.name} · {campaign.status}
-      </p>
+      <PageHeader
+        title={campaign.name}
+        subtitle={`${business.name} • ${campaign.status ?? "draft"}`}
+        actions={
+          <HeaderAction href="/dashboard/send-message" variant="secondary">
+            <Users className="size-3.5" />
+            Go to Send Message
+          </HeaderAction>
+        }
+      />
 
-      <section className="mt-6 rounded-lg border bg-white p-4">
-        <h2 className="font-medium">Campaign message</h2>
-        <p className="mt-2 whitespace-pre-wrap text-sm text-gray-700">
+      {/* Campaign message preview */}
+      <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="text-[14px] font-bold text-slate-700">Campaign Message</h2>
+        <p className="mt-2 whitespace-pre-wrap text-[13px] leading-6 text-slate-600">
           {campaign.message_body}
         </p>
       </section>
+
+      {/* Audience count summary */}
+      <div className="mt-4 flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 shadow-sm">
+        <Users className="size-4 text-slate-400" />
+        <p className="text-[13px] text-slate-600">
+          <span className="font-bold text-slate-950">{audienceCount}</span>{" "}
+          {audienceCount === 1 ? "recipient" : "recipients"} selected for this campaign
+        </p>
+      </div>
 
       <CampaignAudienceManager
         campaignId={campaign.id}
@@ -134,6 +180,6 @@ export default async function CampaignAudiencePage({
         initialTags={tags ?? []}
         initialCustomerTags={customerTags ?? []}
       />
-    </main>
+    </div>
   );
 }

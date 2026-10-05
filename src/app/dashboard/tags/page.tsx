@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import PageHeader from "@/components/dashboard/page-header";
 import TagsManager from "@/components/dashboard/tags/tags-manager";
 
 export default async function TagsPage() {
@@ -20,20 +22,35 @@ export default async function TagsPage() {
 
   if (businessError) {
     return (
-      <main className="p-8">
-        Business load করতে সমস্যা: {businessError.message}
-      </main>
+      <div>
+        <PageHeader title="Tags" />
+        <p className="mt-4 rounded-xl bg-red-50 px-4 py-2.5 text-[13px] text-red-600">
+          Could not load business: {businessError.message}
+        </p>
+      </div>
     );
   }
 
   if (!business) {
     return (
-      <main className="p-8">
-        <p>আগে একটি business তৈরি করতে হবে।</p>
-        <Link className="mt-3 inline-block underline" href="/onboarding">
-          Business তৈরি করো
-        </Link>
-      </main>
+      <div>
+        <PageHeader
+          title="Tags"
+          subtitle="Create a business to manage tags."
+        />
+        <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <p className="text-[13px] text-slate-600">
+            You need to set up a business before creating tags.
+          </p>
+          <Link
+            className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-emerald-500 px-4 py-2 text-[12px] font-bold text-white transition hover:bg-emerald-600"
+            href="/onboarding"
+          >
+            <Plus className="size-4" />
+            Create business
+          </Link>
+        </section>
+      </div>
     );
   }
 
@@ -45,7 +62,12 @@ export default async function TagsPage() {
 
   if (tagsError) {
     return (
-      <main className="p-8">Tags load করতে সমস্যা: {tagsError.message}</main>
+      <div>
+        <PageHeader title="Tags" subtitle={business.name} />
+        <p className="mt-4 rounded-xl bg-red-50 px-4 py-2.5 text-[13px] text-red-600">
+          Could not load tags: {tagsError.message}
+        </p>
+      </div>
     );
   }
 
@@ -57,9 +79,12 @@ export default async function TagsPage() {
 
   if (customersError) {
     return (
-      <main className="p-8">
-        Customers load করতে সমস্যা: {customersError.message}
-      </main>
+      <div>
+        <PageHeader title="Tags" subtitle={business.name} />
+        <p className="mt-4 rounded-xl bg-red-50 px-4 py-2.5 text-[13px] text-red-600">
+          Could not load customers: {customersError.message}
+        </p>
+      </div>
     );
   }
 
@@ -70,26 +95,26 @@ export default async function TagsPage() {
 
   if (customerTagsError) {
     return (
-      <main className="p-8">
-        Customer tags load করতে সমস্যা: {customerTagsError.message}
-      </main>
+      <div>
+        <PageHeader title="Tags" subtitle={business.name} />
+        <p className="mt-4 rounded-xl bg-red-50 px-4 py-2.5 text-[13px] text-red-600">
+          Could not load customer tags: {customerTagsError.message}
+        </p>
+      </div>
     );
   }
 
   return (
-    <main className="mx-auto max-w-6xl p-6 sm:p-8">
-      <Link className="text-sm underline" href="/dashboard">
-        ← Dashboard
-      </Link>
-
-      <h1 className="mt-4 text-2xl font-semibold">Tags</h1>
-      <p className="mt-1 text-gray-600">{business.name}</p>
-
+    <div>
+      <PageHeader
+        title="Tags"
+        subtitle={`${business.name} • ${tags?.length ?? 0} tag${tags?.length === 1 ? "" : "s"}`}
+      />
       <TagsManager
         initialTags={tags ?? []}
         initialCustomers={customers ?? []}
         initialCustomerTags={customerTags ?? []}
       />
-    </main>
+    </div>
   );
 }

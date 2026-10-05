@@ -1,4 +1,4 @@
-import {
+﻿import {
   databaseErrorResponse,
   getDashboardContext,
   readJson,
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
     .select("id, name, created_at")
     .single();
 
-  if (error) return databaseErrorResponse(error, "এই নামে tag ইতিমধ্যে আছে।");
+  if (error) return databaseErrorResponse(error, "A tag with this name already exists.");
   return Response.json(data, { status: 201 });
 }
 

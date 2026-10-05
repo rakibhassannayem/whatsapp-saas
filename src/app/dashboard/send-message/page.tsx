@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import PageHeader from "@/components/dashboard/page-header";
 import SendMessageManager from "@/components/dashboard/send-message/send-message-manager";
 
 export default async function SendMessagePage() {
@@ -19,9 +20,12 @@ export default async function SendMessagePage() {
 
   if (businessError) {
     return (
-      <main className="p-8">
-        Business load করতে সমস্যা: {businessError.message}
-      </main>
+      <div>
+        <PageHeader title="Send Message" />
+        <p className="mt-4 rounded-xl bg-red-50 px-4 py-2.5 text-[13px] text-red-600">
+          Could not load business: {businessError.message}
+        </p>
+      </div>
     );
   }
 
@@ -58,31 +62,45 @@ export default async function SendMessagePage() {
 
   if (campaignsError) {
     return (
-      <main className="p-8">
-        Campaigns load করতে সমস্যা: {campaignsError.message}
-      </main>
+      <div>
+        <PageHeader title="Send Message" subtitle={business.name} />
+        <p className="mt-4 rounded-xl bg-red-50 px-4 py-2.5 text-[13px] text-red-600">
+          Could not load campaigns: {campaignsError.message}
+        </p>
+      </div>
     );
   }
 
   if (customersError) {
     return (
-      <main className="p-8">
-        Customers load করতে সমস্যা: {customersError.message}
-      </main>
+      <div>
+        <PageHeader title="Send Message" subtitle={business.name} />
+        <p className="mt-4 rounded-xl bg-red-50 px-4 py-2.5 text-[13px] text-red-600">
+          Could not load customers: {customersError.message}
+        </p>
+      </div>
     );
   }
 
   if (tagsError) {
     return (
-      <main className="p-8">Tags load করতে সমস্যা: {tagsError.message}</main>
+      <div>
+        <PageHeader title="Send Message" subtitle={business.name} />
+        <p className="mt-4 rounded-xl bg-red-50 px-4 py-2.5 text-[13px] text-red-600">
+          Could not load tags: {tagsError.message}
+        </p>
+      </div>
     );
   }
 
   if (customerTagsError) {
     return (
-      <main className="p-8">
-        Customer tags load করতে সমস্যা: {customerTagsError.message}
-      </main>
+      <div>
+        <PageHeader title="Send Message" subtitle={business.name} />
+        <p className="mt-4 rounded-xl bg-red-50 px-4 py-2.5 text-[13px] text-red-600">
+          Could not load customer tags: {customerTagsError.message}
+        </p>
+      </div>
     );
   }
 
@@ -97,7 +115,12 @@ export default async function SendMessagePage() {
 
     if (error) {
       return (
-        <main className="p-8">Audience load করতে সমস্যা: {error.message}</main>
+        <div>
+          <PageHeader title="Send Message" subtitle={business.name} />
+          <p className="mt-4 rounded-xl bg-red-50 px-4 py-2.5 text-[13px] text-red-600">
+            Could not load audience: {error.message}
+          </p>
+        </div>
       );
     }
 
@@ -105,10 +128,11 @@ export default async function SendMessagePage() {
   }
 
   return (
-    <main className="mx-auto max-w-6xl p-6 sm:p-8">
-      <h1 className="text-2xl font-semibold">Send message</h1>
-      <p className="mt-1 text-gray-600">{business.name}</p>
-
+    <div>
+      <PageHeader
+        title="Send Message"
+        subtitle={`${business.name} • Select a campaign and audience`}
+      />
       <SendMessageManager
         initialCampaigns={campaigns ?? []}
         initialCustomers={customers ?? []}
@@ -116,6 +140,6 @@ export default async function SendMessagePage() {
         initialTags={tags ?? []}
         initialCustomerTags={customerTags ?? []}
       />
-    </main>
+    </div>
   );
 }

@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import PageHeader from "@/components/dashboard/page-header";
 import CampaignsManager from "@/components/dashboard/campaigns/campaigns-manager";
 
 export default async function CampaignsPage() {
@@ -20,20 +22,35 @@ export default async function CampaignsPage() {
 
   if (businessError) {
     return (
-      <main className="p-8">
-        Business load করতে সমস্যা: {businessError.message}
-      </main>
+      <div>
+        <PageHeader title="Campaigns" />
+        <p className="mt-4 rounded-xl bg-red-50 px-4 py-2.5 text-[13px] text-red-600">
+          Could not load business: {businessError.message}
+        </p>
+      </div>
     );
   }
 
   if (!business) {
     return (
-      <main className="p-8">
-        <p>আগে একটি business তৈরি করতে হবে।</p>
-        <Link className="mt-3 inline-block underline" href="/onboarding">
-          Business তৈরি করো
-        </Link>
-      </main>
+      <div>
+        <PageHeader
+          title="Campaigns"
+          subtitle="Create a business to manage campaigns."
+        />
+        <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <p className="text-[13px] text-slate-600">
+            You need to set up a business before creating campaigns.
+          </p>
+          <Link
+            className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-emerald-500 px-4 py-2 text-[12px] font-bold text-white transition hover:bg-emerald-600"
+            href="/onboarding"
+          >
+            <Plus className="size-4" />
+            Create business
+          </Link>
+        </section>
+      </div>
     );
   }
 
@@ -45,9 +62,12 @@ export default async function CampaignsPage() {
 
   if (templatesError) {
     return (
-      <main className="p-8">
-        Templates load করতে সমস্যা: {templatesError.message}
-      </main>
+      <div>
+        <PageHeader title="Campaigns" subtitle={business.name} />
+        <p className="mt-4 rounded-xl bg-red-50 px-4 py-2.5 text-[13px] text-red-600">
+          Could not load templates: {templatesError.message}
+        </p>
+      </div>
     );
   }
 
@@ -59,9 +79,12 @@ export default async function CampaignsPage() {
 
   if (campaignsError) {
     return (
-      <main className="p-8">
-        Campaigns load করতে সমস্যা: {campaignsError.message}
-      </main>
+      <div>
+        <PageHeader title="Campaigns" subtitle={business.name} />
+        <p className="mt-4 rounded-xl bg-red-50 px-4 py-2.5 text-[13px] text-red-600">
+          Could not load campaigns: {campaignsError.message}
+        </p>
+      </div>
     );
   }
 
@@ -76,9 +99,12 @@ export default async function CampaignsPage() {
 
     if (recipientsError) {
       return (
-        <main className="p-8">
-          Audience count load করতে সমস্যা: {recipientsError.message}
-        </main>
+        <div>
+          <PageHeader title="Campaigns" subtitle={business.name} />
+          <p className="mt-4 rounded-xl bg-red-50 px-4 py-2.5 text-[13px] text-red-600">
+            Could not load audience data: {recipientsError.message}
+          </p>
+        </div>
       );
     }
 
@@ -100,14 +126,15 @@ export default async function CampaignsPage() {
   }));
 
   return (
-    <main className="mx-auto max-w-6xl p-6 sm:p-8">
-      <h1 className="text-2xl font-semibold">Campaigns</h1>
-      <p className="mt-1 text-gray-600">{business.name}</p>
-
+    <div>
+      <PageHeader
+        title="Campaigns"
+        subtitle={`${business.name} • ${campaigns?.length ?? 0} draft${campaigns?.length === 1 ? "" : "s"}`}
+      />
       <CampaignsManager
         initialCampaigns={campaignsWithAudience}
         initialTemplates={templates ?? []}
       />
-    </main>
+    </div>
   );
 }

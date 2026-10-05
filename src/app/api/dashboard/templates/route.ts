@@ -1,4 +1,4 @@
-import {
+﻿import {
   databaseErrorResponse,
   getDashboardContext,
   readJson,
@@ -31,7 +31,7 @@ export async function POST(request: Request) {
     .single();
 
   if (error)
-    return databaseErrorResponse(error, "এই নামে template আগে থেকেই আছে।");
+    return databaseErrorResponse(error, "A template with this name already exists.");
   return Response.json(data, { status: 201 });
 }
 
