@@ -105,14 +105,19 @@ export async function DELETE(request: Request) {
 
   const parsed = await readJson<RecipientBody>(request);
   if ("response" in parsed) return parsed.response;
-  const { campaignId, customerId } = parsed.data;
+  const { campaignId, customerId, customerIds } = parsed.data;
 
   if (
     typeof campaignId !== "string" ||
-    (customerId !== undefined && typeof customerId !== "string")
+    (customerId !== undefined && typeof customerId !== "string") ||
+    (customerIds !== undefined &&
+      (!Array.isArray(customerIds) ||
+        customerIds.length === 0 ||
+        customerIds.some((id) => typeof id !== "string"))) ||
+    (customerId !== undefined && customerIds !== undefined)
   ) {
     return Response.json(
-      { error: "Campaign ID is required." },
+      { error: "Campaign ID and valid customer IDs are required." },
       { status: 400 },
     );
   }
@@ -135,6 +140,9 @@ export async function DELETE(request: Request) {
     .eq("campaign_id", campaignId);
   if (typeof customerId === "string")
     query = query.eq("customer_id", customerId);
+  if (Array.isArray(customerIds)) {
+    query = query.in("customer_id", [...new Set(customerIds as string[])]);
+  }
 
   const { error } = await query;
   if (error) return databaseErrorResponse(error);

@@ -6,6 +6,7 @@ import { dashboardApiRequest } from "@/lib/dashboard-api";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { showToast } from "@/components/ui/toast";
 import type { Customer, CustomerTag, Tag } from "@/types/customer";
 import CustomerEditForm from "./customer-edit-form";
 
@@ -32,20 +33,12 @@ export default function CustomerList({
   const [customers, setCustomers] = useState(initialCustomers);
   const [customerTags, setCustomerTags] = useState(initialCustomerTags);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
-  const [message, setMessage] = useState("");
-  const [isError, setIsError] = useState(false);
   const [busy, setBusy] = useState(false);
   const [search, setSearch] = useState("");
-
-  function notify(text: string, error = false) {
-    setMessage(text);
-    setIsError(error);
-  }
 
   async function handleDelete(customer: Customer) {
     const ok = window.confirm(`Remove ${customer.full_name} from the customer list?`);
     if (!ok) return;
-    notify("");
     setBusy(true);
     const { error } = await dashboardApiRequest<{ success: boolean }>(
       "/api/dashboard/customers",
@@ -53,11 +46,11 @@ export default function CustomerList({
     );
     setBusy(false);
     if (error) {
-      notify(error, true);
+      showToast("Could not delete customer", error, "error");
       return;
     }
     setCustomers((c) => c.filter((i) => i.id !== customer.id));
-    notify("Customer deleted.");
+    showToast("Customer deleted", `${customer.full_name} was removed.`);
   }
 
   function addLocalTag(customerIds: string[], tagId: string) {
@@ -84,7 +77,6 @@ export default function CustomerList({
 
   async function applyTag(customerIds: string[], tagId: string) {
     if (customerIds.length === 0 || !tagId) return;
-    notify("");
     setBusy(true);
     let added = 0;
     let skipped = 0;
@@ -98,7 +90,7 @@ export default function CustomerList({
       });
       if (error) {
         setBusy(false);
-        notify(error, true);
+        showToast("Could not apply tag", error, "error");
         return;
       }
       added += data?.addedCount ?? batch.length;
@@ -106,16 +98,16 @@ export default function CustomerList({
     }
     setBusy(false);
     addLocalTag(customerIds, tagId);
-    notify(
+    showToast(
+      "Tag applied",
       skipped > 0
         ? `Tag applied to ${added} customers. ${skipped} already had it.`
-        : `Tag applied to ${added} customer${added === 1 ? "" : "s"}.`
+        : `Tag applied to ${added} customer${added === 1 ? "" : "s"}.`,
     );
   }
 
   async function removeTag(customerIds: string[], tagId: string) {
     if (customerIds.length === 0 || !tagId) return;
-    notify("");
     setBusy(true);
     let removed = 0;
     for (const batch of chunkIds(customerIds)) {
@@ -125,14 +117,17 @@ export default function CustomerList({
       );
       if (error) {
         setBusy(false);
-        notify(error, true);
+        showToast("Could not remove tag", error, "error");
         return;
       }
       removed += data?.removedCount ?? batch.length;
     }
     setBusy(false);
     removeLocalTag(customerIds, tagId);
-    notify(`Tag removed from ${removed} customer${removed === 1 ? "" : "s"}.`);
+    showToast(
+      "Tag removed",
+      `Tag removed from ${removed} customer${removed === 1 ? "" : "s"}.`,
+    );
   }
 
   async function handleAddTag(customerId: string, tagId: string) {
@@ -194,9 +189,11 @@ export default function CustomerList({
                     onSaved={(c) => {
                       setCustomers((list) => list.map((i) => (i.id === c.id ? c : i)));
                       setEditingCustomer(null);
-                      notify("Customer updated.");
+                      showToast("Customer updated", `${c.full_name} was saved.`);
                     }}
-                    onError={(t) => notify(t, true)}
+                    onError={(error) =>
+                      showToast("Could not update customer", error, "error")
+                    }
                   />
                 ) : (
                   <>
@@ -250,11 +247,6 @@ export default function CustomerList({
         )}
       </section>
 
-      {message && (
-        <p className={isError ? "mt-4 rounded-xl bg-red-50 px-4 py-2.5 text-[13px] text-red-600" : "mt-4 rounded-xl bg-emerald-50 px-4 py-2.5 text-[13px] text-emerald-700"}>
-          {message}
-        </p>
-      )}
     </>
   );
 }

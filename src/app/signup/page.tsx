@@ -5,10 +5,9 @@ import Link from "next/link";
 import { Eye, EyeOff, Lock, Mail, UserRound, UserPlus } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import AuthShell from "@/components/auth/auth-shell";
+import { showToast } from "@/components/ui/toast";
 
 export default function SignupPage() {
-  const [message, setMessage] = useState("");
-  const [success, setSuccess] = useState(false);
   const [busy, setBusy] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -18,8 +17,6 @@ export default function SignupPage() {
     const form = event.currentTarget;
     const formData = new FormData(form);
 
-    setMessage("");
-    setSuccess(false);
     setBusy(true);
 
     const fullName = String(formData.get("fullName") ?? "");
@@ -39,12 +36,15 @@ export default function SignupPage() {
     setBusy(false);
 
     if (error) {
-      setMessage(error.message);
+      showToast("Sign-up failed", error.message, "error");
       return;
     }
 
-    setSuccess(true);
-    setMessage("Account created! Open your email and click the confirmation link, then log in to send your first broadcast.");
+    showToast(
+      "Account created",
+      "Open your email and click the confirmation link, then log in to send your first broadcast.",
+      "success",
+    );
     form.reset();
   }
 
@@ -126,17 +126,6 @@ export default function SignupPage() {
         </button>
       </form>
 
-      {message && (
-        <p
-          className={
-            success
-              ? "mt-4 rounded-xl bg-emerald-50 px-4 py-2.5 text-[13px] leading-5 text-emerald-700"
-              : "mt-4 rounded-xl bg-red-50 px-4 py-2.5 text-[13px] leading-5 text-red-600"
-          }
-        >
-          {message}
-        </p>
-      )}
     </AuthShell>
   );
 }

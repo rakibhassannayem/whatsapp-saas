@@ -1,8 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { AlertDialog } from "@base-ui/react/alert-dialog";
 import { Check, CheckCheck, Search, Tag as TagIcon, Trash2, Users } from "lucide-react";
 import { dashboardApiRequest } from "@/lib/dashboard-api";
+import { showToast } from "@/components/ui/toast";
 import type {
   CampaignAudienceManagerProps,
 } from "@/types/campaign";
@@ -18,8 +20,8 @@ export default function CampaignAudienceManager({
     () => new Set(initialRecipients.map((recipient) => recipient.customer_id)),
   );
   const [searchQuery, setSearchQuery] = useState("");
-  const [message, setMessage] = useState<{ text: string; type: "success" | "error" | "info" } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [clearDialogOpen, setClearDialogOpen] = useState(false);
 
   // Filter customers by search term
   const filteredCustomers = useMemo(() => {
@@ -52,7 +54,6 @@ export default function CampaignAudienceManager({
     customerId: string,
     shouldSelect: boolean,
   ) {
-    setMessage(null);
     setBusy(true);
 
     const { error } = await dashboardApiRequest<{ success: boolean }>(
@@ -71,7 +72,7 @@ export default function CampaignAudienceManager({
     setBusy(false);
 
     if (error) {
-      setMessage({ text: error, type: "error" });
+      showToast("Could not update audience", error, "error");
       return;
     }
 
@@ -85,12 +86,9 @@ export default function CampaignAudienceManager({
       return next;
     });
 
-    setMessage({
-      text: shouldSelect
-        ? "Contact added to audience."
-        : "Contact removed from audience.",
-      type: "success",
-    });
+    showToast(
+      shouldSelect ? "Contact added to audience" : "Contact removed from audience",
+    );
   }
 
   async function handleAddCustomersWithTag(tagId: string, tagName: string) {
@@ -98,49 +96,64 @@ export default function CampaignAudienceManager({
       .filter((item) => item.tag_id === tagId)
       .map((item) => item.customer_id);
 
-    const customerIdsToAdd = taggedCustomerIds.filter(
-      (customerId) => !selectedCustomerIds.has(customerId),
-    );
-
-    if (customerIdsToAdd.length === 0) {
-      setMessage({
-        text:
-          taggedCustomerIds.length === 0
-            ? `No customers found with the tag "${tagName}".`
-            : `All contacts with "${tagName}" are already in the audience.`,
-        type: "info",
-      });
+    if (taggedCustomerIds.length === 0) {
+      showToast(
+        "No customers found",
+        `No customers found with the tag "${tagName}".`,
+        "info",
+      );
       return;
     }
 
-    setMessage(null);
+    const allTaggedCustomersSelected = taggedCustomerIds.every((customerId) =>
+      selectedCustomerIds.has(customerId),
+    );
+    const customerIdsToUpdate = allTaggedCustomersSelected
+      ? taggedCustomerIds
+      : taggedCustomerIds.filter(
+          (customerId) => !selectedCustomerIds.has(customerId),
+        );
+
     setBusy(true);
 
     const { error } = await dashboardApiRequest<{ success: boolean }>(
       "/api/dashboard/campaigns/recipients",
-      {
-        method: "POST",
-        body: { campaignId, customerIds: customerIdsToAdd },
-      },
+      allTaggedCustomersSelected
+        ? {
+            method: "DELETE",
+            body: { campaignId, customerIds: customerIdsToUpdate },
+          }
+        : {
+            method: "POST",
+            body: { campaignId, customerIds: customerIdsToUpdate },
+          },
     );
 
     setBusy(false);
 
     if (error) {
-      setMessage({ text: error, type: "error" });
+      showToast("Could not update audience", error, "error");
       return;
     }
 
     setSelectedCustomerIds((current) => {
       const next = new Set(current);
-      customerIdsToAdd.forEach((id) => next.add(id));
+      customerIdsToUpdate.forEach((id) => {
+        if (allTaggedCustomersSelected) {
+          next.delete(id);
+        } else {
+          next.add(id);
+        }
+      });
       return next;
     });
 
-    setMessage({
-      text: `Added ${customerIdsToAdd.length} contact${customerIdsToAdd.length === 1 ? "" : "s"} tagged "${tagName}" to the audience.`,
-      type: "success",
-    });
+    showToast(
+      allTaggedCustomersSelected ? "Customers removed from audience" : "Customers added to audience",
+      allTaggedCustomersSelected
+        ? `Removed ${customerIdsToUpdate.length} contact${customerIdsToUpdate.length === 1 ? "" : "s"} tagged "${tagName}" from the audience.`
+        : `Added ${customerIdsToUpdate.length} contact${customerIdsToUpdate.length === 1 ? "" : "s"} tagged "${tagName}" to the audience.`,
+    );
   }
 
   async function handleSelectAllFiltered() {
@@ -149,14 +162,14 @@ export default function CampaignAudienceManager({
       .filter((id) => !selectedCustomerIds.has(id));
 
     if (idsToAdd.length === 0) {
-      setMessage({
-        text: "All displayed contacts are already selected.",
-        type: "info",
-      });
+      showToast(
+        "Audience unchanged",
+        "All displayed contacts are already selected.",
+        "info",
+      );
       return;
     }
 
-    setMessage(null);
     setBusy(true);
 
     const { error } = await dashboardApiRequest<{ success: boolean }>(
@@ -173,7 +186,7 @@ export default function CampaignAudienceManager({
     setBusy(false);
 
     if (error) {
-      setMessage({ text: error, type: "error" });
+      showToast("Could not update audience", error, "error");
       return;
     }
 
@@ -183,25 +196,18 @@ export default function CampaignAudienceManager({
       return next;
     });
 
-    setMessage({
-      text: `Added ${idsToAdd.length} contact${idsToAdd.length === 1 ? "" : "s"} to audience.`,
-      type: "success",
-    });
+    showToast(
+      "Contacts added to audience",
+      `Added ${idsToAdd.length} contact${idsToAdd.length === 1 ? "" : "s"} to audience.`,
+    );
   }
 
   async function handleClearSelection() {
     if (selectedCustomerIds.size === 0) {
-      setMessage({ text: "No contacts are currently selected.", type: "info" });
+      showToast("Audience unchanged", "No contacts are currently selected.", "info");
       return;
     }
 
-    const confirmed = window.confirm(
-      "Remove all contacts from this campaign's audience?",
-    );
-
-    if (!confirmed) return;
-
-    setMessage(null);
     setBusy(true);
 
     const { error } = await dashboardApiRequest<{ success: boolean }>(
@@ -212,12 +218,13 @@ export default function CampaignAudienceManager({
     setBusy(false);
 
     if (error) {
-      setMessage({ text: error, type: "error" });
+      showToast("Could not clear audience", error, "error");
       return;
     }
 
     setSelectedCustomerIds(new Set());
-    setMessage({ text: "All contacts removed from audience.", type: "success" });
+    setClearDialogOpen(false);
+    showToast("Audience cleared", "All contacts removed from audience.");
   }
 
   return (
@@ -247,15 +254,50 @@ export default function CampaignAudienceManager({
             Select {searchQuery.trim() ? "filtered" : "all"}
           </button>
 
-          <button
-            className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-white px-3 py-1.5 text-[12px] font-semibold text-red-700 transition hover:bg-red-50 disabled:opacity-50"
-            type="button"
-            disabled={busy || selectedCustomerIds.size === 0}
-            onClick={() => void handleClearSelection()}
+          <AlertDialog.Root
+            open={clearDialogOpen}
+            onOpenChange={setClearDialogOpen}
           >
-            <Trash2 className="size-3.5" />
-            Clear
-          </button>
+            <AlertDialog.Trigger
+              className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-white px-3 py-1.5 text-[12px] font-semibold text-red-700 transition hover:bg-red-50 disabled:opacity-50"
+              disabled={busy || selectedCustomerIds.size === 0}
+              type="button"
+            >
+              <Trash2 className="size-3.5" />
+              Clear
+            </AlertDialog.Trigger>
+            <AlertDialog.Portal>
+              <AlertDialog.Backdrop className="fixed inset-0 z-[110] bg-slate-950/40 transition-opacity data-ending-style:opacity-0 data-starting-style:opacity-0" />
+              <AlertDialog.Popup className="fixed top-1/2 left-1/2 z-[111] flex w-[calc(100vw-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 flex-col gap-5 rounded-2xl border border-slate-200 bg-white p-6 text-slate-950 shadow-xl transition duration-150 data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0">
+                <div>
+                  <AlertDialog.Title className="text-[16px] font-bold">
+                    Clear campaign audience?
+                  </AlertDialog.Title>
+                  <AlertDialog.Description className="mt-2 text-[13px] leading-relaxed text-slate-600">
+                    This will remove all {selectedCustomerIds.size} selected
+                    contact{selectedCustomerIds.size === 1 ? "" : "s"} from
+                    this campaign&apos;s audience.
+                  </AlertDialog.Description>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <AlertDialog.Close
+                    className="rounded-full border border-slate-200 px-4 py-2 text-[13px] font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+                    disabled={busy}
+                  >
+                    Cancel
+                  </AlertDialog.Close>
+                  <button
+                    className="rounded-full bg-red-600 px-4 py-2 text-[13px] font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    type="button"
+                    disabled={busy}
+                    onClick={() => void handleClearSelection()}
+                  >
+                    {busy ? "Clearing…" : "Clear audience"}
+                  </button>
+                </div>
+              </AlertDialog.Popup>
+            </AlertDialog.Portal>
+          </AlertDialog.Root>
         </div>
       </div>
 
@@ -267,7 +309,7 @@ export default function CampaignAudienceManager({
             <h3 className="text-[13px] font-bold text-slate-900">Add by Tag</h3>
           </div>
           <p className="mt-1 text-[12px] text-slate-500">
-            Quickly include all contacts grouped under specific tags.
+            Click a tag to add its contacts; click it again when all are selected to remove them.
           </p>
 
           <div className="mt-3.5 flex flex-wrap gap-2">
@@ -285,18 +327,23 @@ export default function CampaignAudienceManager({
                 <button
                   key={tag.id}
                   type="button"
-                  disabled={busy || availableCount === 0}
+                  disabled={busy || taggedCustomerIds.length === 0}
                   onClick={() => void handleAddCustomersWithTag(tag.id, tag.name)}
+                  aria-label={
+                    isAllAdded
+                      ? `Remove customers with ${tag.name} tag from audience`
+                      : `Add customers with ${tag.name} tag to audience`
+                  }
                   className={`inline-flex items-center gap-2 rounded-xl border px-3 py-1.5 text-[12px] font-medium transition ${
                     isAllAdded
-                      ? "border-emerald-200 bg-emerald-50 text-emerald-700 opacity-80"
+                      ? "border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-red-300 hover:bg-red-50 hover:text-red-700"
                       : "border-slate-200 bg-slate-50 text-slate-700 hover:border-emerald-300 hover:bg-emerald-50/50"
                   } disabled:cursor-not-allowed disabled:opacity-60`}
                 >
                   <span>{tag.name}</span>
                   {isAllAdded ? (
                     <span className="flex items-center gap-0.5 text-[11px] font-semibold text-emerald-600">
-                      <Check className="size-3" /> All in
+                      <Check className="size-3" /> All in · click to remove
                     </span>
                   ) : (
                     <span className="rounded-full bg-slate-200/70 px-1.5 py-0.5 text-[10px] font-bold text-slate-600">
@@ -419,21 +466,6 @@ export default function CampaignAudienceManager({
         )}
       </section>
 
-      {/* Status banner */}
-      {message && (
-        <div
-          className={`flex items-center gap-2 rounded-xl px-4 py-3 text-[13px] ${
-            message.type === "error"
-              ? "bg-red-50 text-red-700 border border-red-100"
-              : message.type === "info"
-              ? "bg-blue-50 text-blue-700 border border-blue-100"
-              : "bg-emerald-50 text-emerald-800 border border-emerald-100"
-          }`}
-          role="status"
-        >
-          <span>{message.text}</span>
-        </div>
-      )}
     </section>
   );
 }

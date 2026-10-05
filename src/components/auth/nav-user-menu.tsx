@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { ChevronDown, LayoutDashboard, LogOut, Megaphone } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { dashboardApiRequest } from "@/lib/dashboard-api";
+import { showToast } from "@/components/ui/toast";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -67,9 +68,13 @@ export default function NavUserMenu() {
       method: "POST",
     });
     setLoggingOut(false);
-    if (error) return;
+    if (error) {
+      showToast("Could not log out", error, "error");
+      return;
+    }
     setUser(null);
     setStatus("signed-out");
+    showToast("Logged out", "You have been signed out.");
     router.replace("/");
     router.refresh();
   }
@@ -148,4 +153,3 @@ export default function NavUserMenu() {
     </div>
   );
 }
-

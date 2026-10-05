@@ -4,24 +4,24 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
 import { dashboardApiRequest } from "@/lib/dashboard-api";
+import { showToast } from "@/components/ui/toast";
 import type { DashboardUser } from "./app-sidebar";
 
 export default function SidebarUser({ user }: { user: DashboardUser }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState("");
 
   async function handleLogout() {
-    setMessage("");
     setBusy(true);
     const { error } = await dashboardApiRequest<{ success: boolean }>("/api/dashboard/logout", {
       method: "POST",
     });
     setBusy(false);
     if (error) {
-      setMessage(error);
+      showToast("Could not log out", error, "error");
       return;
     }
+    showToast("Logged out", "You have been signed out.");
     router.replace("/login");
     router.refresh();
   }
@@ -46,7 +46,6 @@ export default function SidebarUser({ user }: { user: DashboardUser }) {
         <LogOut className="size-3.5" />
         {busy ? "Logging out..." : "Log out"}
       </button>
-      {message && <p className="mt-2 text-[12px] leading-4 text-red-600">{message}</p>}
     </div>
   );
 }

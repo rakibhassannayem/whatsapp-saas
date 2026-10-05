@@ -6,10 +6,10 @@ import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Lock, LogIn, Mail } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import AuthShell from "@/components/auth/auth-shell";
+import { showToast } from "@/components/ui/toast";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -21,7 +21,6 @@ export default function LoginPage() {
     const email = String(formData.get("email") ?? "");
     const password = String(formData.get("password") ?? "");
 
-    setMessage("");
     setBusy(true);
 
     const supabase = createClient();
@@ -33,10 +32,11 @@ export default function LoginPage() {
     setBusy(false);
 
     if (error) {
-      setMessage(error.message);
+      showToast("Login failed", error.message, "error");
       return;
     }
 
+    showToast("Logged in", "Welcome back.");
     router.replace("/dashboard");
     router.refresh();
   }
@@ -104,9 +104,6 @@ export default function LoginPage() {
         </button>
       </form>
 
-      {message && (
-        <p className="mt-4 rounded-xl bg-red-50 px-4 py-2.5 text-[13px] leading-5 text-red-600">{message}</p>
-      )}
     </AuthShell>
   );
 }

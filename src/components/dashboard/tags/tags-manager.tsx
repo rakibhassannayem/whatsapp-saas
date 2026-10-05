@@ -2,6 +2,7 @@
 
 import { useMemo, useState, type FormEvent } from "react";
 import { dashboardApiRequest } from "@/lib/dashboard-api";
+import { showToast } from "@/components/ui/toast";
 import type { Tag, TagsManagerProps } from "@/types/customer";
 
 const MAX_CUSTOMERS_PER_REQUEST = 1000;
@@ -27,7 +28,6 @@ export default function TagsManager({
   );
   const [customerSearch, setCustomerSearch] = useState("");
   const [showAssignment, setShowAssignment] = useState(false);
-  const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
 
   const taggedCustomerIds = useMemo(
@@ -62,7 +62,6 @@ export default function TagsManager({
     const formData = new FormData(form);
     const name = String(formData.get("name") ?? "").trim();
 
-    setMessage("");
     setBusy(true);
 
     const { data, error } = await dashboardApiRequest<Tag>(
@@ -73,14 +72,14 @@ export default function TagsManager({
     setBusy(false);
 
     if (error || !data) {
-      setMessage(error ?? "Tag তৈরি করা যায়নি।");
+      showToast("Could not create tag", error ?? "Tag তৈরি করা যায়নি।", "error");
       return;
     }
 
     setTags((current) =>
       [...current, data].sort((a, b) => a.name.localeCompare(b.name)),
     );
-    setMessage("Tag তৈরি হয়েছে।");
+    showToast("Tag created", "Tag তৈরি হয়েছে।");
     form.reset();
   }
 
@@ -91,7 +90,6 @@ export default function TagsManager({
 
     if (!confirmed) return;
 
-    setMessage("");
     setBusy(true);
 
     const { error } = await dashboardApiRequest<{ success: boolean }>(
@@ -102,7 +100,7 @@ export default function TagsManager({
     setBusy(false);
 
     if (error) {
-      setMessage(error);
+      showToast("Could not delete tag", error, "error");
       return;
     }
 
@@ -111,7 +109,7 @@ export default function TagsManager({
       setSelectedTagId("");
       setSelectedCustomerIds(new Set());
     }
-    setMessage("Tag delete হয়েছে।");
+    showToast("Tag deleted", "Tag delete হয়েছে।");
   }
 
   function handleToggleCustomer(customerId: string, shouldSelect: boolean) {
@@ -129,7 +127,6 @@ export default function TagsManager({
   async function handleApplyTag() {
     if (!selectedTagId || selectedCustomerIds.size === 0) return;
 
-    setMessage("");
     setBusy(true);
     let addedCount = 0;
     let skippedCount = 0;
@@ -146,10 +143,12 @@ export default function TagsManager({
 
       if (error) {
         setBusy(false);
-        setMessage(
+        showToast(
+          "Could not apply tag",
           addedCount > 0
             ? `Tag applied to ${addedCount} customers before an error: ${error}`
             : error,
+          "error",
         );
         return;
       }
@@ -180,19 +179,65 @@ export default function TagsManager({
     }
 
     setBusy(false);
-    setMessage(
+    showToast(
+      "Tag applied",
       skippedCount > 0
         ? `Tag applied to ${addedCount} customers. ${skippedCount} already had it.`
         : `Tag applied to ${addedCount} customer${addedCount === 1 ? "" : "s"}.`,
     );
   }
 
+  async function handleRemoveTag(customerId: string) {
+    if (!selectedTagId) return;
+
+    setBusy(true);
+
+    const { data, error } = await dashboardApiRequest<{
+      removedCount: number;
+    }>("/api/dashboard/customers/tags", {
+      method: "DELETE",
+      body: { tagId: selectedTagId, customerId },
+    });
+
+    setBusy(false);
+
+    if (error) {
+      showToast("Could not remove tag", error, "error");
+      return;
+    }
+
+    if (!data) {
+      showToast(
+        "Could not confirm tag removal",
+        "Could not confirm tag removal. Refresh to check the assignment.",
+        "error",
+      );
+      return;
+    }
+
+    setCustomerTags((current) =>
+      current.filter(
+        (item) =>
+          item.tag_id !== selectedTagId || item.customer_id !== customerId,
+      ),
+    );
+    showToast(
+      data.removedCount > 0 ? "Tag removed" : "Assignment already removed",
+      data.removedCount > 0
+        ? "Tag removed from customer."
+        : "This customer no longer had this tag.",
+    );
+  }
+
   return (
     <>
       <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-[15px] font-bold text-slate-950">Create a New Tag</h2>
+        <h2 className="text-[15px] font-bold text-slate-950">
+          Create a New Tag
+        </h2>
         <p className="mt-1 text-[13px] text-slate-500">
-          Use tags to group customers — for example &quot;VIP&quot;, &quot;New Customer&quot;, or &quot;Inactive&quot;.
+          Use tags to group customers — for example &quot;VIP&quot;, &quot;New
+          Customer&quot;, or &quot;Inactive&quot;.
         </p>
 
         <form
@@ -224,9 +269,12 @@ export default function TagsManager({
       <section className="mt-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-[15px] font-bold text-slate-950">Assign Customers to a Tag</h2>
+            <h2 className="text-[15px] font-bold text-slate-950">
+              Manage Customers for a Tag
+            </h2>
             <p className="mt-1 text-[13px] text-slate-500">
-              Pick a tag, then select which customers should belong to it.
+              Pick a tag to assign it to customers or remove it from customers
+              who already have it.
             </p>
           </div>
           <button
@@ -236,7 +284,7 @@ export default function TagsManager({
             disabled={tags.length === 0 || initialCustomers.length === 0}
             aria-expanded={showAssignment}
           >
-            {showAssignment ? "Close" : "Assign customers"}
+            {showAssignment ? "Close" : "Manage customers"}
           </button>
         </div>
 
@@ -267,7 +315,6 @@ export default function TagsManager({
               onChange={(event) => {
                 setSelectedTagId(event.target.value);
                 setSelectedCustomerIds(new Set());
-                setMessage("");
               }}
             >
               <option value="">Select a tag</option>
@@ -334,8 +381,11 @@ export default function TagsManager({
                       alreadyTagged || selectedCustomerIds.has(customer.id);
 
                     return (
-                      <li className="p-3" key={customer.id}>
-                        <label className="flex cursor-pointer items-start gap-3">
+                      <li
+                        className="flex items-center justify-between gap-3 p-3"
+                        key={customer.id}
+                      >
+                        <label className="flex min-w-0 flex-1 cursor-pointer items-start gap-3">
                           <input
                             className="mt-1 size-4"
                             type="checkbox"
@@ -363,6 +413,17 @@ export default function TagsManager({
                             </span>
                           </span>
                         </label>
+                        {alreadyTagged && (
+                          <button
+                            className="shrink-0 rounded-md border border-red-200 px-3 py-1 text-xs font-medium text-red-700 transition hover:bg-red-50 disabled:opacity-50"
+                            type="button"
+                            onClick={() => void handleRemoveTag(customer.id)}
+                            disabled={busy}
+                            aria-label={`Remove tag from ${customer.full_name}`}
+                          >
+                            Remove tag
+                          </button>
+                        )}
                       </li>
                     );
                   })}
@@ -391,7 +452,7 @@ export default function TagsManager({
 
       <section className="mt-8">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-semibold">তোমার tags</h2>
+          <h2 className="font-semibold">All Tags</h2>
           <span className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700">
             {tags.length}
           </span>
@@ -399,7 +460,7 @@ export default function TagsManager({
 
         {tags.length === 0 ? (
           <p className="rounded-xl border bg-white p-5 text-gray-600">
-            এখনো কোনো tag তৈরি করা হয়নি। উপরের form দিয়ে প্রথম tag তৈরি করো।
+            NO tags created yet.
           </p>
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -426,14 +487,6 @@ export default function TagsManager({
         )}
       </section>
 
-      {message && (
-        <p
-          className="mt-4 rounded-xl border border-slate-200 bg-white px-4 py-3 text-[13px] text-slate-700"
-          role="status"
-        >
-          {message}
-        </p>
-      )}
     </>
   );
 }

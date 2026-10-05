@@ -34,10 +34,7 @@ export default async function TagsPage() {
   if (!business) {
     return (
       <div>
-        <PageHeader
-          title="Tags"
-          subtitle="Create a business to manage tags."
-        />
+        <PageHeader title="Tags" subtitle="Create a business to manage tags." />
         <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <p className="text-[13px] text-slate-600">
             You need to set up a business before creating tags.
@@ -110,6 +107,7 @@ export default async function TagsPage() {
         title="Tags"
         subtitle={`${business.name} • ${tags?.length ?? 0} tag${tags?.length === 1 ? "" : "s"}`}
       />
+
       <TagsManager
         initialTags={tags ?? []}
         initialCustomers={customers ?? []}
