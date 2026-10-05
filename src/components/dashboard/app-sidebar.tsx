@@ -14,13 +14,10 @@ import {
 } from "lucide-react";
 import { cn } from "cn";
 import { Separator } from "@/components/ui/separator";
+import type { DashboardUser } from "@/types/dashboard";
 import SidebarUser from "./sidebar-user";
 
-export type DashboardUser = {
-  displayName: string;
-  email: string | null;
-  initial: string;
-};
+export type { DashboardUser } from "@/types/dashboard";
 
 const GROUPS: {
   label: string;

@@ -2,10 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import CampaignAudienceManager from "@/components/dashboard/campaigns/campaign-details/campaign-audience-manager";
-
-type CampaignAudiencePageProps = {
-  params: Promise<{ campaignId: string }>;
-};
+import type { CampaignAudiencePageProps } from "@/types/campaign";
 
 export default async function CampaignAudiencePage({
   params,

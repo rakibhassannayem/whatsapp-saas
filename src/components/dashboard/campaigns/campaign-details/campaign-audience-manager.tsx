@@ -2,36 +2,11 @@
 
 import { useState } from "react";
 import { dashboardApiRequest } from "@/lib/dashboard-api";
-
-type Customer = {
-  id: string;
-  full_name: string;
-  phone_e164: string;
-  email: string | null;
-};
-
-type Tag = {
-  id: string;
-  name: string;
-};
-
-type CustomerTag = {
-  customer_id: string;
-  tag_id: string;
-};
-
-type CampaignRecipient = {
-  campaign_id: string;
-  customer_id: string;
-};
-
-type CampaignAudienceManagerProps = {
-  campaignId: string;
-  initialCustomers: Customer[];
-  initialRecipients: CampaignRecipient[];
-  initialTags: Tag[];
-  initialCustomerTags: CustomerTag[];
-};
+import type {
+  CampaignAudienceManagerProps,
+  CampaignRecipient,
+} from "@/types/campaign";
+import type { Customer, CustomerTag, Tag } from "@/types/customer";
 
 export default function CampaignAudienceManager({
   campaignId,

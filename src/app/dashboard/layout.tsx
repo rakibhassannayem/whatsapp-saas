@@ -1,11 +1,7 @@
-import type { ReactNode } from "react";
 import { createClient } from "@/lib/supabase/server";
-import { SidebarContent, type DashboardUser } from "@/components/dashboard/app-sidebar";
+import { SidebarContent } from "@/components/dashboard/app-sidebar";
 import DashboardMobileNav from "@/components/dashboard/dashboard-mobile-nav";
-
-type DashboardLayoutProps = {
-  children: ReactNode;
-};
+import type { DashboardLayoutProps, DashboardUser } from "@/types/dashboard";
 
 async function getSidebarUser(): Promise<DashboardUser> {
   const supabase = await createClient();

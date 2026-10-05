@@ -2,30 +2,7 @@
 
 import { useMemo, useState, type FormEvent } from "react";
 import { dashboardApiRequest } from "@/lib/dashboard-api";
-
-type Tag = {
-  id: string;
-  name: string;
-  created_at: string;
-};
-
-type Customer = {
-  id: string;
-  full_name: string;
-  phone_e164: string;
-  email: string | null;
-};
-
-type CustomerTag = {
-  customer_id: string;
-  tag_id: string;
-};
-
-type TagsManagerProps = {
-  initialTags: Tag[];
-  initialCustomers: Customer[];
-  initialCustomerTags: CustomerTag[];
-};
+import type { Customer, CustomerTag, Tag, TagsManagerProps } from "@/types/customer";
 
 const MAX_CUSTOMERS_PER_REQUEST = 1000;
 

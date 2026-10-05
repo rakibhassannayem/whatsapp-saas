@@ -3,26 +3,11 @@
 import { useState, type FormEvent } from "react";
 import { dashboardApiRequest } from "@/lib/dashboard-api";
 import Link from "next/link";
-
-type Campaign = {
-  id: string;
-  name: string;
-  message_body: string;
-  audience_count: number;
-  status: string;
-  created_at: string;
-};
-
-type MessageTemplate = {
-  id: string;
-  name: string;
-  body: string;
-};
-
-type CampaignsManagerProps = {
-  initialCampaigns: Campaign[];
-  initialTemplates: MessageTemplate[];
-};
+import type {
+  Campaign,
+  CampaignsManagerProps,
+  MessageTemplate,
+} from "@/types/campaign";
 
 export default function CampaignsManager({
   initialCampaigns,

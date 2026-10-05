@@ -8,21 +8,13 @@ import * as XLSX from "xlsx";
 import { dashboardApiRequest } from "@/lib/dashboard-api";
 import { CheckCircle2, FileSpreadsheet, Tag as TagIcon, TriangleAlert, Upload } from "lucide-react";
 import { cn } from "cn";
-
-type ImportRow = {
-  full_name: string;
-  phone_e164: string;
-  email: string | null;
-};
-
-type ImportedCustomer = ImportRow & { id: string };
-type ImportCompletion = {
-  error: string | null;
-  message?: string;
-};
-
-type InvalidRow = { rowNumber: number; reasons: string[] };
-type ColumnMapping = { field: string; source: string };
+import type {
+  ColumnMapping,
+  ImportCompletion,
+  ImportRow,
+  InvalidRow,
+  ImportedCustomer,
+} from "@/types/customer-import";
 
 const phonePattern = /^\+[1-9][0-9]{1,14}$/;
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

@@ -16,12 +16,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
-
-type NavUser = {
-  email: string | null;
-  displayName: string;
-  initial: string;
-};
+import type { NavUser } from "@/types/auth";
 
 function toNavUser(email: string | undefined, fullName: unknown): NavUser | null {
   if (!email) return null;

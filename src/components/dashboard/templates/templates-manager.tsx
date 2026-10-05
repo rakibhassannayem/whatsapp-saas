@@ -2,17 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { dashboardApiRequest } from "@/lib/dashboard-api";
-
-type MessageTemplate = {
-  id: string;
-  name: string;
-  body: string;
-  created_at: string;
-};
-
-type TemplatesManagerProps = {
-  initialTemplates: MessageTemplate[];
-};
+import type { MessageTemplate, TemplatesManagerProps } from "@/types/campaign";
 
 export default function TemplatesManager({
   initialTemplates,

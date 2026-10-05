@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { UserPlus } from "lucide-react";
 import { dashboardApiRequest } from "@/lib/dashboard-api";
 import { Input } from "@/components/ui/input";
-import type { Customer } from "@/components/dashboard/customers/customer-types";
+import type { Customer } from "@/types/customer";
 
 export default function AddCustomerForm() {
   const router = useRouter();

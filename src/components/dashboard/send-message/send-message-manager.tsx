@@ -4,47 +4,16 @@ import { useState } from "react";
 import { Send } from "lucide-react";
 import { dashboardApiRequest } from "@/lib/dashboard-api";
 import { Textarea } from "@/components/ui/textarea";
+import type {
+  Campaign,
+  CampaignRecipient,
+  SendMessageManagerProps,
+} from "@/types/campaign";
+import type { Customer, CustomerTag, Tag } from "@/types/customer";
 import CampaignAudienceManager from "../campaigns/campaign-details/campaign-audience-manager";
 import CustomerImporter from "../customers/import/customer-import";
 
-type Campaign = {
-  id: string;
-  name: string;
-  message_body: string;
-  status: string;
-};
-
-type Customer = {
-  id: string;
-  full_name: string;
-  phone_e164: string;
-  email: string | null;
-};
-
 type ImportedCustomer = Customer;
-
-type CampaignRecipient = {
-  campaign_id: string;
-  customer_id: string;
-};
-
-type Tag = {
-  id: string;
-  name: string;
-};
-
-type CustomerTag = {
-  customer_id: string;
-  tag_id: string;
-};
-
-type SendMessageManagerProps = {
-  initialCampaigns: Campaign[];
-  initialCustomers: Customer[];
-  initialRecipients: CampaignRecipient[];
-  initialTags: Tag[];
-  initialCustomerTags: CustomerTag[];
-};
 
 export default function SendMessageManager({
   initialCampaigns,

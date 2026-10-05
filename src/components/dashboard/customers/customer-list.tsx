@@ -6,7 +6,7 @@ import { dashboardApiRequest } from "@/lib/dashboard-api";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import type { Customer, CustomerTag, Tag } from "./customer-types";
+import type { Customer, CustomerTag, Tag } from "@/types/customer";
 import CustomerEditForm from "./customer-edit-form";
 
 const MAX_IDS_PER_REQUEST = 1000;

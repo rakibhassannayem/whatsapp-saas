@@ -3,7 +3,7 @@
 import { type FormEvent } from "react";
 import { dashboardApiRequest } from "@/lib/dashboard-api";
 import { Input } from "@/components/ui/input";
-import type { Customer } from "./customer-types";
+import type { Customer } from "@/types/customer";
 
 export default function CustomerEditForm({
   customer,

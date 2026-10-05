@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { dashboardApiRequest } from "@/lib/dashboard-api";
-import type { Customer, CustomerTag, Tag } from "./customer-types";
+import type { Customer, CustomerTag, Tag } from "@/types/customer";
 import CustomerEditForm from "./customer-edit-form";
 
 export function useCustomerActions(
