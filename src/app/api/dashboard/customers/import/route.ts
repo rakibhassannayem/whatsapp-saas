@@ -26,6 +26,7 @@ export async function POST(request: Request) {
   }
 
   const customerRows = [];
+  const seenPhones = new Set<string>();
   for (const row of rows) {
     if (!row || typeof row !== "object" || Array.isArray(row)) {
       return Response.json(
@@ -45,6 +46,7 @@ export async function POST(request: Request) {
       !fullName ||
       fullName.length > 120 ||
       !phonePattern.test(phone) ||
+      seenPhones.has(phone) ||
       (value.email !== null &&
         value.email !== undefined &&
         typeof value.email !== "string") ||
@@ -56,6 +58,7 @@ export async function POST(request: Request) {
       );
     }
 
+    seenPhones.add(phone);
     customerRows.push({
       business_id: context.business.id,
       full_name: fullName,
@@ -74,5 +77,27 @@ export async function POST(request: Request) {
 
   if (error) return databaseErrorResponse(error);
   const customerIds = (data ?? []).map((row) => row.id);
-  return Response.json({ addedCount: customerIds.length, customerIds });
+  const { data: matchedCustomers, error: matchedCustomersError } =
+    await context.supabase
+      .from("customers")
+      .select("id, full_name, phone_e164, email")
+      .eq("business_id", context.business.id)
+      .in(
+        "phone_e164",
+        customerRows.map((row) => row.phone_e164),
+      );
+
+  if (matchedCustomersError) return databaseErrorResponse(matchedCustomersError);
+  if (matchedCustomers?.length !== customerRows.length) {
+    return Response.json(
+      { error: "Could not find every imported customer after saving them." },
+      { status: 500 },
+    );
+  }
+
+  return Response.json({
+    addedCount: customerIds.length,
+    customerIds,
+    matchedCustomers,
+  });
 }

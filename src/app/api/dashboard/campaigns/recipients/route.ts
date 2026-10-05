@@ -72,14 +72,30 @@ export async function POST(request: Request) {
     );
   }
 
-  const { error } = await context.supabase.from("campaign_recipients").insert(
-    uniqueCustomerIds.map((customerId) => ({
-      campaign_id: campaignId,
-      customer_id: customerId,
-    })),
-  );
+  const { error: addRecipientsError } = await context.supabase
+    .from("campaign_recipients")
+    .upsert(
+      uniqueCustomerIds.map((customerId) => ({
+        campaign_id: campaignId,
+        customer_id: customerId,
+      })),
+      { onConflict: "campaign_id,customer_id", ignoreDuplicates: true },
+    );
 
-  if (error) return databaseErrorResponse(error);
+  if (addRecipientsError) return databaseErrorResponse(addRecipientsError);
+
+  if (parsed.data.replaceExisting === true) {
+    const { error: removeRecipientsError } = await context.supabase
+      .from("campaign_recipients")
+      .delete()
+      .eq("campaign_id", campaignId)
+      .not("customer_id", "in", `(${uniqueCustomerIds.join(",")})`);
+
+    if (removeRecipientsError) {
+      return databaseErrorResponse(removeRecipientsError);
+    }
+  }
+
   return Response.json({ success: true }, { status: 201 });
 }
 

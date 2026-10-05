@@ -1,10 +1,11 @@
-import Nav from "@/components/home/nav";
-import Hero from "@/components/home/hero";
-import { Audience, LogoStrip, Modes } from "@/components/home/services";
-import { Banner } from "@/components/home/pricing";
-import { Features } from "@/components/home/features";
-import { HowItWorks } from "@/components/home/contact";
-import { CtaFooter, LiveDemos } from "@/components/home/demos";
+import { Banner } from "@/components/home/Pricing";
+import { Features } from "@/components/home/Features";
+import { HowItWorks } from "@/components/home/HowItWorks";
+import { LiveDemos } from "@/components/home/Demos";
+import Navbar from "@/components/common/Navbar";
+import Hero from "@/components/home/Hero";
+import { Audience, LogoStrip, Modes } from "@/components/home/Services";
+import { Footer } from "@/components/common/Footer";
 
 export default function HomePage() {
   return (
@@ -13,7 +14,7 @@ export default function HomePage() {
           cloned pill-nav + black sitemap footer match the reference.
           Dashboard / login / signup pages are untouched. */}
       <style>{`header.sticky,body>footer{display:none!important}`}</style>
-      <Nav />
+      <Navbar />
       <div className="mt-3">
         <Hero />
       </div>
@@ -24,9 +25,7 @@ export default function HomePage() {
       <Features />
       <HowItWorks />
       <LiveDemos />
-      <CtaFooter />
+      <Footer />
     </div>
   );
 }
-
-

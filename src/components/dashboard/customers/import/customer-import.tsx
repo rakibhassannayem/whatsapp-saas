@@ -15,6 +15,12 @@ type ImportRow = {
   email: string | null;
 };
 
+type ImportedCustomer = ImportRow & { id: string };
+type ImportCompletion = {
+  error: string | null;
+  message?: string;
+};
+
 type InvalidRow = { rowNumber: number; reasons: string[] };
 type ColumnMapping = { field: string; source: string };
 
@@ -106,9 +112,17 @@ function buildImportRows(
 export default function CustomerImporter({
   compact = false,
   initialTags = [],
+  showTagging = true,
+  submitLabel,
+  onImported,
 }: {
   compact?: boolean;
   initialTags?: { id: string; name: string }[];
+  showTagging?: boolean;
+  submitLabel?: (count: number) => string;
+  onImported?: (
+    customers: ImportedCustomer[],
+  ) => Promise<ImportCompletion>;
 }) {
   const router = useRouter();
   const [rows, setRows] = useState<ImportRow[]>([]);
@@ -227,22 +241,53 @@ export default function CustomerImporter({
     const { data, error } = await dashboardApiRequest<{
       addedCount: number;
       customerIds: string[];
+      matchedCustomers: ImportedCustomer[];
     }>("/api/dashboard/customers/import", { method: "POST", body: { rows } });
 
-    setBusy(false);
     if (error) {
+      setBusy(false);
       setStatus(error, true);
       return;
     }
 
     const addedCount = data?.addedCount ?? 0;
+    const matchedCustomers = data?.matchedCustomers;
+    if (!matchedCustomers || matchedCustomers.length !== rows.length) {
+      setBusy(false);
+      setStatus(
+        "Customers were imported, but the saved customer list could not be confirmed. Please upload the file again to retry.",
+        true,
+      );
+      router.refresh();
+      return;
+    }
+
+    setRows([]);
+    setImportedIds(data?.customerIds ?? []);
+    setImportedTagId("");
+
+    if (onImported) {
+      const completion = await onImported(matchedCustomers);
+      if (completion.error) {
+        setBusy(false);
+        setStatus(completion.error, true);
+        router.refresh();
+        return;
+      }
+      setStatus(
+        completion.message ??
+          `${matchedCustomers.length} imported customers were added to the audience.`,
+      );
+      setBusy(false);
+      router.refresh();
+      return;
+    }
+
     const skipped = invalidRows.length + (rows.length - addedCount);
     setStatus(
       `${addedCount} customers imported. ${skipped} invalid or duplicate rows skipped.`
     );
-    setRows([]);
-    setImportedIds(data?.customerIds ?? []);
-    setImportedTagId("");
+    setBusy(false);
     router.refresh();
   }
 
@@ -312,7 +357,7 @@ export default function CustomerImporter({
         </p>
       )}
 
-      {importedIds.length > 0 && (
+      {showTagging && importedIds.length > 0 && (
         <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-5 sm:p-6">
           <p className="flex items-center gap-2 text-[13px] font-bold text-emerald-900">
             <TagIcon className="size-4" />
@@ -424,7 +469,9 @@ export default function CustomerImporter({
             disabled={busy}
           >
             <Upload className="size-4" />
-            {busy ? "Importing..." : `Import ${rows.length} customers`}
+            {busy
+              ? "Importing..."
+              : submitLabel?.(rows.length) ?? `Import ${rows.length} customers`}
           </button>
         </div>
       )}

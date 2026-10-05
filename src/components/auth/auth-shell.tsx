@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { CheckCheck, Megaphone, MessagesSquare } from "lucide-react";
 import type { ReactNode } from "react";
-import Nav from "@/components/home/nav";
+import Nav from "@/components/common/Navbar";
 
 const BULLETS = [
   "Upload your Excel customer list once",

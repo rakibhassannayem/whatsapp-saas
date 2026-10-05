@@ -10,7 +10,7 @@ const NAV = [
   { label: "Examples", href: "/#demos" },
 ];
 
-export default function Nav() {
+export default function Navbar() {
   return (
     <div className="sticky top-0 z-50 bg-white/80 py-3 backdrop-blur-md">
       <div className="mx-auto max-w-6xl px-3 sm:px-5">

@@ -9,6 +9,10 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 Keep page implementations in `src/components/pages/<page-name>/` and have the matching `src/app/` `page.tsx` import them. Group API route handlers by feature under `src/app/api/dashboard/<feature>/`; keep CRUD methods for a resource in its `route.ts` and nest related resources, such as customer tags under `customers/tags` and campaign recipients under `campaigns/recipients`.
 
+## Send Message Audience Imports
+
+On the Send Message page, choose a campaign and import a `.csv` or `.xlsx` file with `Name`/`full_name` and `Phone`/`phone_e164` columns (email is optional). Valid numbers replace that campaign's audience; customers are matched by phone so existing contacts are reused instead of duplicated. This prepares the recipient list only—WhatsApp message delivery is not integrated yet.
+
 ## Getting Started
 
 First, run the development server:
