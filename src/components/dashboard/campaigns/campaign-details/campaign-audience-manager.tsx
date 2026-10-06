@@ -1,13 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { AlertDialog } from "@base-ui/react/alert-dialog";
-import { Check, CheckCheck, Search, Tag as TagIcon, Trash2, Users } from "lucide-react";
+import { CheckCheck, Users } from "lucide-react";
 import { dashboardApiRequest } from "@/lib/dashboard-api";
 import { showToast } from "@/components/ui/toast";
-import type {
-  CampaignAudienceManagerProps,
-} from "@/types/campaign";
+import type { CampaignAudienceManagerProps } from "@/types/campaign";
+import ClearAudienceDialog from "./clear-audience-dialog";
+import AudienceTagFilter from "./audience-tag-filter";
+import AudienceCustomerList from "./audience-customer-list";
 
 export default function CampaignAudienceManager({
   campaignId,
@@ -149,7 +149,9 @@ export default function CampaignAudienceManager({
     });
 
     showToast(
-      allTaggedCustomersSelected ? "Customers removed from audience" : "Customers added to audience",
+      allTaggedCustomersSelected
+        ? "Customers removed from audience"
+        : "Customers added to audience",
       allTaggedCustomersSelected
         ? `Removed ${customerIdsToUpdate.length} contact${customerIdsToUpdate.length === 1 ? "" : "s"} tagged "${tagName}" from the audience.`
         : `Added ${customerIdsToUpdate.length} contact${customerIdsToUpdate.length === 1 ? "" : "s"} tagged "${tagName}" to the audience.`,
@@ -254,218 +256,34 @@ export default function CampaignAudienceManager({
             Select {searchQuery.trim() ? "filtered" : "all"}
           </button>
 
-          <AlertDialog.Root
+          <ClearAudienceDialog
             open={clearDialogOpen}
             onOpenChange={setClearDialogOpen}
-          >
-            <AlertDialog.Trigger
-              className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-white px-3 py-1.5 text-[12px] font-semibold text-red-700 transition hover:bg-red-50 disabled:opacity-50"
-              disabled={busy || selectedCustomerIds.size === 0}
-              type="button"
-            >
-              <Trash2 className="size-3.5" />
-              Clear
-            </AlertDialog.Trigger>
-            <AlertDialog.Portal>
-              <AlertDialog.Backdrop className="fixed inset-0 z-[110] bg-slate-950/40 transition-opacity data-ending-style:opacity-0 data-starting-style:opacity-0" />
-              <AlertDialog.Popup className="fixed top-1/2 left-1/2 z-[111] flex w-[calc(100vw-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 flex-col gap-5 rounded-2xl border border-slate-200 bg-white p-6 text-slate-950 shadow-xl transition duration-150 data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0">
-                <div>
-                  <AlertDialog.Title className="text-[16px] font-bold">
-                    Clear campaign audience?
-                  </AlertDialog.Title>
-                  <AlertDialog.Description className="mt-2 text-[13px] leading-relaxed text-slate-600">
-                    This will remove all {selectedCustomerIds.size} selected
-                    contact{selectedCustomerIds.size === 1 ? "" : "s"} from
-                    this campaign&apos;s audience.
-                  </AlertDialog.Description>
-                </div>
-                <div className="flex justify-end gap-2">
-                  <AlertDialog.Close
-                    className="rounded-full border border-slate-200 px-4 py-2 text-[13px] font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
-                    disabled={busy}
-                  >
-                    Cancel
-                  </AlertDialog.Close>
-                  <button
-                    className="rounded-full bg-red-600 px-4 py-2 text-[13px] font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
-                    type="button"
-                    disabled={busy}
-                    onClick={() => void handleClearSelection()}
-                  >
-                    {busy ? "Clearing…" : "Clear audience"}
-                  </button>
-                </div>
-              </AlertDialog.Popup>
-            </AlertDialog.Portal>
-          </AlertDialog.Root>
+            selectedCount={selectedCustomerIds.size}
+            busy={busy}
+            onConfirmClear={() => void handleClearSelection()}
+          />
         </div>
       </div>
 
-      {/* Tag quick-add bar */}
-      {initialTags.length > 0 && (
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex items-center gap-2">
-            <TagIcon className="size-4 text-emerald-600" />
-            <h3 className="text-[13px] font-bold text-slate-900">Add by Tag</h3>
-          </div>
-          <p className="mt-1 text-[12px] text-slate-500">
-            Click a tag to add its contacts; click it again when all are selected to remove them.
-          </p>
+      <AudienceTagFilter
+        initialTags={initialTags}
+        initialCustomerTags={initialCustomerTags}
+        selectedCustomerIds={selectedCustomerIds}
+        busy={busy}
+        onToggleTag={handleAddCustomersWithTag}
+      />
 
-          <div className="mt-3.5 flex flex-wrap gap-2">
-            {initialTags.map((tag) => {
-              const taggedCustomerIds = initialCustomerTags
-                .filter((item) => item.tag_id === tag.id)
-                .map((item) => item.customer_id);
-
-              const availableCount = taggedCustomerIds.filter(
-                (id) => !selectedCustomerIds.has(id),
-              ).length;
-              const isAllAdded = taggedCustomerIds.length > 0 && availableCount === 0;
-
-              return (
-                <button
-                  key={tag.id}
-                  type="button"
-                  disabled={busy || taggedCustomerIds.length === 0}
-                  onClick={() => void handleAddCustomersWithTag(tag.id, tag.name)}
-                  aria-label={
-                    isAllAdded
-                      ? `Remove customers with ${tag.name} tag from audience`
-                      : `Add customers with ${tag.name} tag to audience`
-                  }
-                  className={`inline-flex items-center gap-2 rounded-xl border px-3 py-1.5 text-[12px] font-medium transition ${
-                    isAllAdded
-                      ? "border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-red-300 hover:bg-red-50 hover:text-red-700"
-                      : "border-slate-200 bg-slate-50 text-slate-700 hover:border-emerald-300 hover:bg-emerald-50/50"
-                  } disabled:cursor-not-allowed disabled:opacity-60`}
-                >
-                  <span>{tag.name}</span>
-                  {isAllAdded ? (
-                    <span className="flex items-center gap-0.5 text-[11px] font-semibold text-emerald-600">
-                      <Check className="size-3" /> All in · click to remove
-                    </span>
-                  ) : (
-                    <span className="rounded-full bg-slate-200/70 px-1.5 py-0.5 text-[10px] font-bold text-slate-600">
-                      +{availableCount}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </section>
-      )}
-
-      {/* Customer search & list */}
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="relative flex-1 sm:max-w-md">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search contacts by name, phone, or email..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-[13px] outline-none transition focus:border-emerald-400 focus:bg-white focus:ring-2 focus:ring-emerald-100"
-            />
-          </div>
-
-          <p className="text-[12px] text-slate-500">
-            Showing <span className="font-semibold text-slate-900">{filteredCustomers.length}</span> of{" "}
-            {initialCustomers.length} contacts
-          </p>
-        </div>
-
-        {initialCustomers.length === 0 ? (
-          <div className="mt-6 rounded-xl border border-dashed border-slate-200 p-8 text-center">
-            <Users className="mx-auto size-8 text-slate-300" />
-            <p className="mt-2 text-[14px] font-semibold text-slate-700">No contacts available</p>
-            <p className="mt-1 text-[13px] text-slate-500">
-              Add or import customers first on the Customers page to build your campaign audience.
-            </p>
-          </div>
-        ) : filteredCustomers.length === 0 ? (
-          <div className="mt-6 rounded-xl border border-dashed border-slate-200 p-8 text-center">
-            <Search className="mx-auto size-8 text-slate-300" />
-            <p className="mt-2 text-[14px] font-semibold text-slate-700">No matching contacts</p>
-            <p className="mt-1 text-[13px] text-slate-500">
-              Try adjusting your search query to find contacts.
-            </p>
-          </div>
-        ) : (
-          <div className="mt-4 divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200">
-            {filteredCustomers.map((customer) => {
-              const selected = selectedCustomerIds.has(customer.id);
-              const tags = tagsByCustomerId.get(customer.id) ?? [];
-
-              return (
-                <label
-                  key={customer.id}
-                  className={`flex cursor-pointer items-center justify-between gap-3 p-3.5 transition ${
-                    selected ? "bg-emerald-50/40" : "hover:bg-slate-50/60"
-                  }`}
-                >
-                  <div className="flex min-w-0 items-center gap-3">
-                    <input
-                      type="checkbox"
-                      checked={selected}
-                      disabled={busy}
-                      onChange={(e) =>
-                        void handleToggleCustomer(customer.id, e.currentTarget.checked)
-                      }
-                      className="size-4 shrink-0 rounded border-slate-300 text-emerald-600 focus:ring-emerald-400"
-                    />
-
-                    {/* Initials badge */}
-                    <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[11px] font-bold text-slate-600">
-                      {customer.full_name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .slice(0, 2)
-                        .join("")
-                        .toUpperCase()}
-                    </div>
-
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="truncate text-[13px] font-semibold text-slate-900">
-                          {customer.full_name}
-                        </span>
-                        {tags.map((tagName) => (
-                          <span
-                            key={tagName}
-                            className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600"
-                          >
-                            {tagName}
-                          </span>
-                        ))}
-                      </div>
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[12px] text-slate-500">
-                        <span>{customer.phone_e164}</span>
-                        {customer.email && (
-                          <span className="text-slate-400">· {customer.email}</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <span
-                    className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${
-                      selected
-                        ? "bg-emerald-100 text-emerald-800"
-                        : "bg-slate-100 text-slate-500"
-                    }`}
-                  >
-                    {selected ? "Selected" : "Not in audience"}
-                  </span>
-                </label>
-              );
-            })}
-          </div>
-        )}
-      </section>
-
+      <AudienceCustomerList
+        initialCustomers={initialCustomers}
+        filteredCustomers={filteredCustomers}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        selectedCustomerIds={selectedCustomerIds}
+        tagsByCustomerId={tagsByCustomerId}
+        busy={busy}
+        onToggleCustomer={handleToggleCustomer}
+      />
     </section>
   );
 }

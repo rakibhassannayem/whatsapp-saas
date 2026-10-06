@@ -1,14 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Pencil, Search, Tags as TagsIcon, Trash2 } from "lucide-react";
+import { Search } from "lucide-react";
 import { dashboardApiRequest } from "@/lib/dashboard-api";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
 import { showToast } from "@/components/ui/toast";
 import type { Customer, CustomerTag, Tag } from "@/types/customer";
-import CustomerEditForm from "./customer-edit-form";
+import CustomerListItem from "./customer-list-item";
 
 const MAX_IDS_PER_REQUEST = 1000;
 
@@ -32,17 +30,19 @@ export default function CustomerList({
 }) {
   const [customers, setCustomers] = useState(initialCustomers);
   const [customerTags, setCustomerTags] = useState(initialCustomerTags);
-  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+  const [editingCustomerId, setEditingCustomerId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [search, setSearch] = useState("");
 
   async function handleDelete(customer: Customer) {
-    const ok = window.confirm(`Remove ${customer.full_name} from the customer list?`);
+    const ok = window.confirm(
+      `Remove ${customer.full_name} from the customer list?`,
+    );
     if (!ok) return;
     setBusy(true);
     const { error } = await dashboardApiRequest<{ success: boolean }>(
       "/api/dashboard/customers",
-      { method: "DELETE", body: { id: customer.id } }
+      { method: "DELETE", body: { id: customer.id } },
     );
     setBusy(false);
     if (error) {
@@ -71,7 +71,7 @@ export default function CustomerList({
   function removeLocalTag(customerIds: string[], tagId: string) {
     const target = new Set(customerIds);
     setCustomerTags((current) =>
-      current.filter((i) => !(i.tag_id === tagId && target.has(i.customer_id)))
+      current.filter((i) => !(i.tag_id === tagId && target.has(i.customer_id))),
     );
   }
 
@@ -111,10 +111,12 @@ export default function CustomerList({
     setBusy(true);
     let removed = 0;
     for (const batch of chunkIds(customerIds)) {
-      const { data, error } = await dashboardApiRequest<{ removedCount: number }>(
-        "/api/dashboard/customers/tags",
-        { method: "DELETE", body: { tagId, customerIds: batch } }
-      );
+      const { data, error } = await dashboardApiRequest<{
+        removedCount: number;
+      }>("/api/dashboard/customers/tags", {
+        method: "DELETE",
+        body: { tagId, customerIds: batch },
+      });
       if (error) {
         setBusy(false);
         showToast("Could not remove tag", error, "error");
@@ -130,14 +132,6 @@ export default function CustomerList({
     );
   }
 
-  async function handleAddTag(customerId: string, tagId: string) {
-    await applyTag([customerId], tagId);
-  }
-
-  async function handleRemoveTag(customerId: string, tagId: string) {
-    await removeTag([customerId], tagId);
-  }
-
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return customers;
@@ -145,7 +139,7 @@ export default function CustomerList({
       (c) =>
         c.full_name.toLowerCase().includes(q) ||
         c.phone_e164.toLowerCase().includes(q) ||
-        (c.email?.toLowerCase().includes(q) ?? false)
+        (c.email?.toLowerCase().includes(q) ?? false),
     );
   }, [customers, search]);
 
@@ -168,85 +162,41 @@ export default function CustomerList({
       <section className="mt-4">
         {filtered.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-10 text-center">
-            <p className="text-[14px] font-bold text-slate-900">No customers found</p>
+            <p className="text-[14px] font-bold text-slate-900">
+              No customers found
+            </p>
             <p className="mx-auto mt-1 max-w-sm text-[13px] text-slate-500">
-              Add your first customer or import your Excel list to start broadcasting.
+              Add your first customer or import your Excel list to start
+              broadcasting.
             </p>
           </div>
         ) : (
           <ul className="space-y-3">
             {filtered.map((customer) => (
-              <li
+              <CustomerListItem
                 key={customer.id}
-                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5"
-              >
-                {editingCustomer?.id === customer.id ? (
-                  <CustomerEditForm
-                    customer={editingCustomer}
-                    busy={busy}
-                    setBusy={setBusy}
-                    onCancel={() => setEditingCustomer(null)}
-                    onSaved={(c) => {
-                      setCustomers((list) => list.map((i) => (i.id === c.id ? c : i)));
-                      setEditingCustomer(null);
-                      showToast("Customer updated", `${c.full_name} was saved.`);
-                    }}
-                    onError={(error) =>
-                      showToast("Could not update customer", error, "error")
-                    }
-                  />
-                ) : (
-                  <>
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                      <div className="min-w-0">
-                        <h3 className="truncate text-[15px] font-bold text-slate-950">{customer.full_name}</h3>
-                        <p className="mt-0.5 text-[13px] text-slate-500">{customer.phone_e164}{customer.email ? ` • ${customer.email}` : ""}</p>
-                      </div>
-                    <div className="flex shrink-0 gap-2">
-                      <button type="button" onClick={() => setEditingCustomer(customer)} className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-3.5 py-1.5 text-[12px] font-bold text-slate-600 transition hover:bg-slate-50">
-                        <Pencil className="size-3.5" /> Edit
-                      </button>
-                      <button type="button" disabled={busy} onClick={() => handleDelete(customer)} className="inline-flex items-center gap-1.5 rounded-full border border-red-100 px-3.5 py-1.5 text-[12px] font-bold text-red-600 transition hover:bg-red-50 disabled:opacity-50">
-                        <Trash2 className="size-3.5" /> Delete
-                      </button>
-                    </div>
-                  </div>
-                  <Separator className="my-3" />
-                  <div>
-                    <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-slate-400">
-                      <TagsIcon className="size-3.5" /> Tags
-                    </p>
-                    <div className="mt-2 flex flex-wrap gap-1.5">
-                      {customerTags.filter((i) => i.customer_id === customer.id).map((item) => {
-                        const tag = initialTags.find((t) => t.id === item.tag_id);
-                        if (!tag) return null;
-                        return (
-                          <Badge key={item.tag_id} variant="secondary" className="gap-1.5 rounded-full bg-emerald-50 py-1 pl-3 pr-1.5 text-emerald-800">
-                            {tag.name}
-                            <button type="button" disabled={busy} aria-label={`Remove ${tag.name} tag`} onClick={() => handleRemoveTag(customer.id, tag.id)} className="flex size-4 items-center justify-center rounded-full text-emerald-600 transition hover:bg-emerald-100 disabled:opacity-50">×</button>
-                          </Badge>
-                        );
-                      })}
-                    </div>
-                    {initialTags.length === 0 ? (
-                      <p className="mt-2 text-[12px] text-slate-500">Create a tag on the Tags page first.</p>
-                    ) : (
-                      <select className="mt-3 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-[13px] outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 sm:w-56" value="" disabled={busy} aria-label={`Add a tag for ${customer.full_name}`} onChange={(e) => { if (e.target.value) void handleAddTag(customer.id, e.target.value); }}>
-                        <option value="">Add a tag…</option>
-                        {initialTags.filter((tag) => !customerTags.some((i) => i.customer_id === customer.id && i.tag_id === tag.id)).map((tag) => (
-                          <option key={tag.id} value={tag.id}>{tag.name}</option>
-                        ))}
-                      </select>
-                    )}
-                    </div>
-                  </>
-                )}
-              </li>
+                customer={customer}
+                isEditing={editingCustomerId === customer.id}
+                initialTags={initialTags}
+                customerTags={customerTags}
+                busy={busy}
+                setBusy={setBusy}
+                onStartEdit={(c) => setEditingCustomerId(c.id)}
+                onCancelEdit={() => setEditingCustomerId(null)}
+                onSaved={(c) => {
+                  setCustomers((list) =>
+                    list.map((i) => (i.id === c.id ? c : i)),
+                  );
+                  setEditingCustomerId(null);
+                }}
+                onDelete={handleDelete}
+                onAddTag={(cId, tId) => void applyTag([cId], tId)}
+                onRemoveTag={(cId, tId) => void removeTag([cId], tId)}
+              />
             ))}
           </ul>
         )}
       </section>
-
     </>
   );
 }
