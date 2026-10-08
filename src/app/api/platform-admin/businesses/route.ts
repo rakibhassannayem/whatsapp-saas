@@ -1,0 +1,73 @@
+import { getPlatformAdminServiceContext } from "@/lib/supabase/platform-admin";
+
+const uuidPattern =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function blockedResponse(status: string) {
+  if (status === "unauthenticated") {
+    return Response.json({ error: "Sign in required." }, { status: 401 });
+  }
+  if (status === "not-admin") {
+    return Response.json(
+      { error: "Platform admin access required." },
+      { status: 403 },
+    );
+  }
+  return Response.json(
+    { error: "Platform admin service is not configured." },
+    { status: 503 },
+  );
+}
+
+export async function PATCH(request: Request) {
+  const context = await getPlatformAdminServiceContext();
+  if (context.status !== "authorized") return blockedResponse(context.status);
+
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return Response.json({ error: "Invalid JSON body." }, { status: 400 });
+  }
+
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    return Response.json(
+      { error: "Business details are invalid." },
+      { status: 400 },
+    );
+  }
+
+  const businessId = "businessId" in body ? body.businessId : null;
+  const name = "name" in body ? body.name : null;
+  if (
+    typeof businessId !== "string" ||
+    !uuidPattern.test(businessId) ||
+    typeof name !== "string" ||
+    name.trim().length < 1 ||
+    name.trim().length > 120
+  ) {
+    return Response.json(
+      { error: "Business ID বা নাম সঠিক নয়। নাম 1–120 অক্ষরের হতে হবে।" },
+      { status: 400 },
+    );
+  }
+
+  const { data, error } = await context.serviceClient
+    .from("businesses")
+    .update({ name: name.trim() })
+    .eq("id", businessId)
+    .select("id, name")
+    .maybeSingle();
+
+  if (error) {
+    return Response.json(
+      { error: "Business name update করা যায়নি।" },
+      { status: 500 },
+    );
+  }
+  if (!data) {
+    return Response.json({ error: "Business পাওয়া যায়নি।" }, { status: 404 });
+  }
+
+  return Response.json({ business: data });
+}

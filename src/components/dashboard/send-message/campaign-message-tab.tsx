@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Info, Megaphone, Send } from "lucide-react";
+import { FlaskConical, Info, Megaphone, Send } from "lucide-react";
+import { showToast } from "@/components/ui/toast";
 import { dashboardApiRequest } from "@/lib/dashboard-api";
 import type { Campaign, CampaignRecipient } from "@/types/campaign";
 import type { Customer, CustomerTag, Tag } from "@/types/customer";
@@ -32,6 +33,7 @@ export default function CampaignMessageTab({
     initialCampaigns.length > 0 ? initialCampaigns[0].id : "",
   );
   const [audienceVersion, setAudienceVersion] = useState(0);
+  const [isTestSending, setIsTestSending] = useState(false);
 
   const selectedCampaign = initialCampaigns.find(
     (campaign) => campaign.id === selectedCampaignId,
@@ -39,6 +41,43 @@ export default function CampaignMessageTab({
   const selectedRecipients = recipients.filter(
     (recipient) => recipient.campaign_id === selectedCampaignId,
   );
+
+  async function handleSendTestMessage() {
+    if (!selectedCampaign) return;
+    setIsTestSending(true);
+
+    try {
+      const response = await fetch("/api/whatsapp/campaign-test-send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ campaignId: selectedCampaign.id }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        showToast(
+          "Test Message Failed",
+          data.error ?? "মেসেজ পাঠানো সম্ভব হয়নি।",
+          "error",
+        );
+        return;
+      }
+
+      showToast(
+        "Test WhatsApp Sent",
+        `Meta test template 'hello_world' delivered to your verified WhatsApp for campaign "${selectedCampaign.name}".`,
+        "success",
+      );
+    } catch {
+      showToast(
+        "Network Error",
+        "সার্ভারের সাথে সংযোগ করা যায়নি। আবার চেষ্টা করুন।",
+        "error",
+      );
+    } finally {
+      setIsTestSending(false);
+    }
+  }
 
   async function handleImportRecipients(importedCustomers: Customer[]) {
     if (!selectedCampaign) {
@@ -214,6 +253,33 @@ export default function CampaignMessageTab({
               </div>
             </div>
 
+            {/* Safe Test Mode Card */}
+            <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50/70 p-4 text-[13px] text-amber-950">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-start gap-2.5">
+                  <FlaskConical className="mt-0.5 size-4 shrink-0 text-amber-700" />
+                  <div>
+                    <p className="font-semibold text-amber-950">
+                      Safe Test Mode: Single-Recipient Verification
+                    </p>
+                    <p className="mt-0.5 text-[12px] leading-relaxed text-amber-800">
+                      Send the Meta-approved <code className="rounded bg-amber-200/60 px-1 py-0.5 font-mono text-[11px] font-semibold text-amber-950">hello_world</code> test template exclusively to your verified personal WhatsApp number. Customer audience will not be contacted.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleSendTestMessage}
+                  disabled={isTestSending}
+                  className="shrink-0 inline-flex items-center gap-2 rounded-full bg-amber-600 px-4 py-2 text-[12px] font-bold text-white transition hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <Send className="size-3.5" />
+                  {isTestSending ? "Sending test…" : "Send Test to My WhatsApp"}
+                </button>
+              </div>
+            </div>
+
             <div className="mt-4 rounded-xl border border-blue-100 bg-blue-50/60 p-4 text-[13px] text-blue-800">
               <div className="flex items-start gap-2.5">
                 <Info className="mt-0.5 size-4 shrink-0 text-blue-600" />
@@ -222,7 +288,7 @@ export default function CampaignMessageTab({
                     Audience configured: {selectedRecipients.length} recipients selected
                   </p>
                   <p className="mt-0.5 text-[12px] leading-relaxed text-blue-700">
-                    WhatsApp Business Cloud API connection is currently in configuration mode. Once connected, broadcasts will send with real-time delivery status tracking.
+                    Full audience mass broadcast is locked in test mode. Live broadcast delivery will be enabled after production number and custom template configuration.
                   </p>
                 </div>
               </div>

@@ -8,6 +8,7 @@ const NAV = [
   { label: "Who It's For", href: "/#industry" },
   { label: "How It Works", href: "/#how" },
   { label: "Examples", href: "/#demos" },
+  { label: "Plans", href: "/#plans" },
 ];
 
 export default function Navbar() {

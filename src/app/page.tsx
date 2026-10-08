@@ -1,4 +1,4 @@
-import { Banner } from "@/components/home/Pricing";
+import { Banner, SubscriptionPlans } from "@/components/home/Pricing";
 import { Features } from "@/components/home/Features";
 import { HowItWorks } from "@/components/home/HowItWorks";
 import { LiveDemos } from "@/components/home/Demos";
@@ -25,6 +25,7 @@ export default function HomePage() {
       <Features />
       <HowItWorks />
       <LiveDemos />
+      <SubscriptionPlans />
       <Footer />
     </div>
   );

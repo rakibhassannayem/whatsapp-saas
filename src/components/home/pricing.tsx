@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MessageCircle, CheckCheck } from "lucide-react";
+import { Check, CheckCheck, MessageCircle, Sparkles } from "lucide-react";
 
 export function Banner() {
   return (
@@ -45,6 +45,90 @@ export function Banner() {
             </p>
           </div>
         </div>
+      </div>
+    </section>
+  );
+}
+
+export function SubscriptionPlans() {
+  const periods = [
+    {
+      name: "Monthly",
+      description: "মাসে মাসে plan ব্যবহার",
+      note: "প্রতি মাসে renewal",
+      featured: false,
+    },
+    {
+      name: "Yearly",
+      description: "এক বছর ধরে plan ব্যবহার",
+      note: "বছরে একবার renewal",
+      featured: true,
+    },
+  ];
+
+  return (
+    <section id="plans" className="mx-auto max-w-6xl px-5 py-16 sm:py-20">
+      <div className="mx-auto max-w-2xl text-center">
+        <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800">
+          <Sparkles className="size-3.5" /> Simple subscription options
+        </span>
+        <h2 className="mt-4 text-3xl font-extrabold tracking-tight text-slate-950 sm:text-4xl">
+          Choose how you want to subscribe
+        </h2>
+        <p className="mt-3 text-sm leading-6 text-slate-600">
+          মাসিক অথবা বাৎসরিক—তোমার business-এর জন্য সুবিধাজনক সময়কাল বেছে নাও।
+          Package price ও usage limit শিগগির ঘোষণা করা হবে।
+        </p>
+      </div>
+
+      <div className="mx-auto mt-9 grid max-w-3xl gap-4 md:grid-cols-2">
+        {periods.map((period) => (
+          <article
+            key={period.name}
+            className={`relative rounded-3xl border p-6 sm:p-7 ${
+              period.featured
+                ? "border-emerald-500 bg-[#0b4a3c] text-white shadow-xl shadow-emerald-950/10"
+                : "border-slate-200 bg-white text-slate-950 shadow-sm"
+            }`}
+          >
+            {period.featured && (
+              <span className="absolute right-5 top-5 rounded-full bg-emerald-300 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-emerald-950">
+                Yearly
+              </span>
+            )}
+            <p className={`text-sm font-semibold ${period.featured ? "text-emerald-200" : "text-emerald-700"}`}>
+              {period.name} plan
+            </p>
+            <h3 className="mt-2 text-2xl font-bold">{period.description}</h3>
+            <p className={`mt-5 text-lg font-bold ${period.featured ? "text-white" : "text-slate-900"}`}>
+              মূল্য শিগগির জানানো হবে
+            </p>
+            <p className={`mt-1 text-xs ${period.featured ? "text-emerald-100/70" : "text-slate-500"}`}>
+              {period.note}
+            </p>
+            <ul className={`mt-6 space-y-3 border-t pt-5 text-sm ${period.featured ? "border-white/15 text-emerald-50" : "border-slate-100 text-slate-600"}`}>
+              {["Customer ও campaign management", "CSV এবং Excel customer import", "ব্যবহারের limit package অনুযায়ী নির্ধারিত হবে"].map((feature) => (
+                <li key={feature} className="flex items-start gap-2.5">
+                  <Check className={`mt-0.5 size-4 shrink-0 ${period.featured ? "text-emerald-300" : "text-emerald-600"}`} />
+                  <span>{feature}</span>
+                </li>
+              ))}
+            </ul>
+            <Link
+              href="/signup"
+              className={`mt-7 inline-flex w-full items-center justify-center rounded-xl px-4 py-3 text-sm font-semibold transition ${
+                period.featured
+                  ? "bg-emerald-300 text-emerald-950 hover:bg-emerald-200"
+                  : "bg-slate-950 text-white hover:bg-slate-800"
+              }`}
+            >
+              Account তৈরি করো
+            </Link>
+            <p className={`mt-3 text-center text-[11px] ${period.featured ? "text-emerald-100/60" : "text-slate-400"}`}>
+              এখনো online payment চালু হয়নি
+            </p>
+          </article>
+        ))}
       </div>
     </section>
   );

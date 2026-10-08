@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import PageHeader from "@/components/dashboard/page-header";
 import SendMessageManager from "@/components/dashboard/send-message/send-message-manager";
+import Link from "next/link";
+import { Plus } from "lucide-react";
 
 export default async function SendMessagePage() {
   const supabase = await createClient();
@@ -30,7 +32,23 @@ export default async function SendMessagePage() {
   }
 
   if (!business) {
-    redirect("/onboarding");
+    return (
+      <div>
+        <PageHeader title="Send Message" subtitle="Create a business to send message." />
+        <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <p className="text-[13px] text-slate-600">
+            You need to set up a business before sending messages.
+          </p>
+          <Link
+            className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-emerald-500 px-4 py-2 text-[12px] font-bold text-white transition hover:bg-emerald-600"
+            href="/onboarding"
+          >
+            <Plus className="size-4" />
+            Create business
+          </Link>
+        </section>
+      </div>
+    );
   }
 
   const [

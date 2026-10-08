@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 import { SidebarContent } from "@/components/dashboard/app-sidebar";
 import DashboardMobileNav from "@/components/dashboard/dashboard-mobile-nav";
 import type { DashboardLayoutProps, DashboardUser } from "@/types/dashboard";
@@ -12,7 +13,8 @@ async function getSidebarUser(): Promise<DashboardUser> {
     user?.user_metadata && typeof user.user_metadata.full_name === "string"
       ? user.user_metadata.full_name.trim()
       : "";
-  const displayName = fullName || (email ? email.split("@")[0] : null) || "Signed-in user";
+  const displayName =
+    fullName || (email ? email.split("@")[0] : null) || "Signed-in user";
   return {
     displayName,
     email,
@@ -20,7 +22,13 @@ async function getSidebarUser(): Promise<DashboardUser> {
   };
 }
 
-export default async function DashboardLayout({ children }: DashboardLayoutProps) {
+export default async function DashboardLayout({
+  children,
+}: DashboardLayoutProps) {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getUser();
+  if (!data.user) redirect("/login");
+
   const user = await getSidebarUser();
 
   return (

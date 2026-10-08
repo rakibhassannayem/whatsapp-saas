@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import PageHeader, { HeaderAction } from "@/components/dashboard/page-header";
+import WhatsAppTestButton from "./whatsapp-test-button";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -207,6 +208,10 @@ export default async function DashboardPage() {
             );
           })}
         </div>
+      </section>
+
+      <section className="mt-6 flex justify-center">
+        <WhatsAppTestButton />
       </section>
     </div>
   );

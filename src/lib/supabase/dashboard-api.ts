@@ -2,9 +2,9 @@ import { createClient } from "@/lib/supabase/server";
 
 export async function getDashboardContext() {
   const supabase = await createClient();
-  const { data: auth, error: authError } = await supabase.auth.getClaims();
+  const { data: auth, error: authError } = await supabase.auth.getUser();
 
-  if (authError || !auth?.claims) {
+  if (authError || !auth.user) {
     return {
       response: Response.json({ error: "Unauthorized" }, { status: 401 }),
     } as const;
