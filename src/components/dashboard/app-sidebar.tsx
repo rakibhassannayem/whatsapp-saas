@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   FileText,
+  Building2,
   LayoutDashboard,
   MessagesSquare,
   Megaphone,
@@ -16,6 +17,7 @@ import { cn } from "cn";
 import { Separator } from "@/components/ui/separator";
 import type { DashboardUser } from "@/types/dashboard";
 import SidebarUser from "./sidebar-user";
+import BusinessSwitcher from "./business-switcher";
 
 export type { DashboardUser } from "@/types/dashboard";
 
@@ -31,6 +33,12 @@ const GROUPS: {
         href: "/dashboard",
         icon: LayoutDashboard,
         match: (p) => p === "/dashboard",
+      },
+      {
+        label: "My businesses",
+        href: "/dashboard/businesses",
+        icon: Building2,
+        match: (p) => p.startsWith("/dashboard/businesses"),
       },
     ],
   },
@@ -122,7 +130,17 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
-export function SidebarContent({ user, onNavigate }: { user: DashboardUser; onNavigate?: () => void }) {
+export function SidebarContent({
+  user,
+  businesses,
+  activeBusinessId,
+  onNavigate,
+}: {
+  user: DashboardUser;
+  businesses: { id: string; name: string }[];
+  activeBusinessId: string | null;
+  onNavigate?: () => void;
+}) {
   return (
     <div className="flex h-full flex-col px-4 py-6">
       <Link href="/" onClick={onNavigate} className="flex items-center gap-2 px-2">
@@ -134,6 +152,7 @@ export function SidebarContent({ user, onNavigate }: { user: DashboardUser; onNa
         </span>
       </Link>
       <div className="mt-8 min-h-0 flex-1 overflow-y-auto">
+        <BusinessSwitcher businesses={businesses} activeBusinessId={activeBusinessId} />
         <SidebarNav onNavigate={onNavigate} />
       </div>
       <div className="mt-6">

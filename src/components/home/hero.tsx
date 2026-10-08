@@ -1,4 +1,5 @@
 import Link from "next/link";
+import AuthAwareLink from "@/components/common/auth-aware-link";
 import { Megaphone, BookCheck, Tags, Send, CheckCheck } from "lucide-react";
 
 export function PhoneMock() {
@@ -57,9 +58,9 @@ export default function Hero() {
               and broadcast it on WhatsApp. Personal for everyone — sent in one click.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
-              <Link href="/signup" className="rounded-full bg-emerald-400 px-5 py-2.5 text-[13px] font-semibold text-emerald-950">
+              <AuthAwareLink href="/signup" className="rounded-full bg-emerald-400 px-5 py-2.5 text-[13px] font-semibold text-emerald-950">
                 Start Free Broadcast
-              </Link>
+              </AuthAwareLink>
               <Link href="#how" className="rounded-full bg-white px-5 py-2.5 text-[13px] font-semibold text-slate-900">
                 See How A Broadcast Looks
               </Link>

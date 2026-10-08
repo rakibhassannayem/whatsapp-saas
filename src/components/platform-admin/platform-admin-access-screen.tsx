@@ -39,7 +39,7 @@ export default function PlatformAdminAccessScreen({
     });
 
     if (error) {
-      setErrorMessage("ইমেইল বা পাসওয়ার্ড সঠিক নয়। আবার চেষ্টা করো।");
+      setErrorMessage("The email or password is incorrect. Please try again.");
       setBusy(false);
       return;
     }
@@ -51,8 +51,8 @@ export default function PlatformAdminAccessScreen({
       await supabase.auth.signOut();
       setErrorMessage(
         roleError
-          ? "Admin অনুমতি যাচাই করা যায়নি। কিছুক্ষণ পর আবার চেষ্টা করো।"
-          : "এই account-এর platform admin অনুমতি নেই।",
+          ? "Admin access could not be verified. Please try again shortly."
+          : "This account is not on the platform admin allowlist.",
       );
       setBusy(false);
       return;
@@ -66,8 +66,8 @@ export default function PlatformAdminAccessScreen({
     mode === "login"
       ? "Platform Admin sign in"
       : mode === "denied"
-        ? "Admin access নেই"
-        : "Admin access যাচাই করা যায়নি";
+        ? "Admin access denied"
+        : "Could not verify admin access";
 
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#07120f] px-5 py-12 text-white">
@@ -93,10 +93,10 @@ export default function PlatformAdminAccessScreen({
         <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
         <p className="mt-2 text-sm leading-6 text-slate-400">
           {mode === "login"
-            ? "অনুমোদিত platform admin account দিয়ে নিরাপদে প্রবেশ করো।"
+            ? "Sign in with an authorized platform admin account."
             : mode === "denied"
-              ? "এই account private admin allowlist-এ নেই। Admin access-এর জন্য অনুমোদিত account ব্যবহার করো।"
-              : "Supabase থেকে admin অনুমতি যাচাই করা যায়নি। Configuration ঠিক করে আবার চেষ্টা করো।"}
+              ? "This account is not on the private admin allowlist. Use an authorized account to continue."
+              : "Supabase could not verify admin access. Check the configuration and try again."}
         </p>
 
         {mode === "login" && (
@@ -125,7 +125,7 @@ export default function PlatformAdminAccessScreen({
                   name="password"
                   type={showPassword ? "text" : "password"}
                   autoComplete="current-password"
-                  placeholder="তোমার password"
+                  placeholder="Your password"
                   required
                 />
                 <button
@@ -133,7 +133,7 @@ export default function PlatformAdminAccessScreen({
                   type="button"
                   onClick={() => setShowPassword((shown) => !shown)}
                   aria-label={
-                    showPassword ? "Password লুকাও" : "Password দেখাও"
+                    showPassword ? "Hide password" : "Show password"
                   }
                 >
                   {showPassword ? (
@@ -155,7 +155,7 @@ export default function PlatformAdminAccessScreen({
               disabled={busy}
             >
               <LockKeyhole className="size-4" />
-              {busy ? "যাচাই হচ্ছে…" : "Admin console-এ প্রবেশ"}
+              {busy ? "Verifying…" : "Continue to admin console"}
               {!busy && <ArrowRight className="size-4" />}
             </button>
           </form>
@@ -163,8 +163,7 @@ export default function PlatformAdminAccessScreen({
 
         {mode !== "login" && (
           <div className="mt-7 rounded-xl border border-white/10 bg-black/10 p-4 text-sm leading-6 text-slate-400">
-            Admin অনুমতি Supabase-এর server-verified allowlist থেকে নির্ধারিত
-            হয়।
+            Admin access is verified server-side against the Supabase allowlist.
           </div>
         )}
         <div className="mt-8 border-t border-white/10 pt-5 text-xs text-slate-500">

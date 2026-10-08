@@ -4,6 +4,7 @@ import { Plus, Upload } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import PageHeader, { HeaderAction } from "@/components/dashboard/page-header";
 import CustomerList from "@/components/dashboard/customers/customer-list";
+import { getActiveDashboardBusiness, getDashboardBusinesses } from "@/lib/supabase/dashboard-business";
 
 export default async function CustomersPage() {
   const supabase = await createClient();
@@ -13,12 +14,8 @@ export default async function CustomersPage() {
     redirect("/login");
   }
 
-  const { data: business, error: businessError } = await supabase
-    .from("businesses")
-    .select("id, name")
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
+  const { data: businesses, error: businessError } = await getDashboardBusinesses(supabase);
+  const business = await getActiveDashboardBusiness(businesses ?? []);
 
   if (businessError) {
     return (

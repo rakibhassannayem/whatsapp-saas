@@ -13,15 +13,15 @@ export default async function AdminSubscriptionsPage() {
 
   const stats = [
     { label: "Active subscriptions", value: result.subscriptionDataAvailable ? activeCount : null, icon: PackageCheck },
-    { label: "মেয়াদ নির্ধারিত নয়", value: result.subscriptionDataAvailable ? noExpiryCount : null, icon: CalendarClock },
-    { label: "Message limit যুক্ত", value: result.subscriptionDataAvailable ? subscriptions.filter((item) => item.monthlyMessageLimit !== null).length : null, icon: Gauge },
+    { label: "No expiry date", value: result.subscriptionDataAvailable ? noExpiryCount : null, icon: CalendarClock },
+    { label: "With message limits", value: result.subscriptionDataAvailable ? subscriptions.filter((item) => item.monthlyMessageLimit !== null).length : null, icon: Gauge },
   ];
 
   return (
     <div>
       <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700">Plans & renewals</p>
       <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">Subscriptions</h1>
-      <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">Business-এর package, subscription-এর মেয়াদ এবং usage limit দেখো।</p>
+      <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">Review each business package, subscription term, and usage limit.</p>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-3">
         {stats.map(({ label, value, icon: Icon }) => (
@@ -33,11 +33,11 @@ export default async function AdminSubscriptionsPage() {
       </div>
 
       {!result.subscriptionDataAvailable && (
-        <div className="mt-6"><PlatformAdminDataNotice title="Subscription schema এখনো Supabase-এ নেই" description="Repository-তে থাকা subscription migration চালালে Monthly/Yearly plan, subscription মেয়াদ এবং customer/campaign/message limit এই পেজে দেখা যাবে।" /></div>
+        <div className="mt-6"><PlatformAdminDataNotice title="Subscription schema is not in Supabase yet" description="Run the repository migration to load Monthly/Yearly plans, subscription terms, and customer/campaign/message limits here." /></div>
       )}
 
       <section className="mt-6 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
-        <div className="border-b border-slate-100 px-5 py-4"><h2 className="font-semibold text-slate-900">Business subscriptions</h2><p className="mt-1 text-xs text-slate-500">Package assignment ও expiry details</p></div>
+        <div className="border-b border-slate-100 px-5 py-4"><h2 className="font-semibold text-slate-900">Business subscriptions</h2><p className="mt-1 text-xs text-slate-500">Package assignment and expiry details</p></div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[900px] text-left text-xs text-slate-500">
             <thead className="bg-slate-50 uppercase tracking-wide"><tr>{["Business", "Package", "Period", "Start date", "Expiry", "Customers", "Campaigns", "Monthly messages", "Status"].map((column) => <th key={column} className="px-4 py-3 font-semibold">{column}</th>)}</tr></thead>
@@ -56,10 +56,10 @@ export default async function AdminSubscriptionsPage() {
                 </tr>
               ))}
               {result.subscriptionDataAvailable && subscriptions.length === 0 && (
-                <tr><td colSpan={9} className="px-5 py-12 text-center"><p className="text-sm font-semibold text-slate-800">Subscription record এখনো নেই</p><p className="mt-2 text-xs text-slate-500">Database কাঠামো প্রস্তুত; কোনো business-কে plan assign করা হয়নি।</p></td></tr>
+                <tr><td colSpan={9} className="px-5 py-12 text-center"><p className="text-sm font-semibold text-slate-800">No subscription records yet</p><p className="mt-2 text-xs text-slate-500">The database structure is ready, but no plans have been assigned.</p></td></tr>
               )}
               {!result.subscriptionDataAvailable && (
-                <tr><td colSpan={9} className="px-5 py-12 text-center text-xs text-slate-500">Migration চালানোর পর এখানে subscription record আসবে।</td></tr>
+                <tr><td colSpan={9} className="px-5 py-12 text-center text-xs text-slate-500">Subscription records will appear here after the migration is applied.</td></tr>
               )}
             </tbody>
           </table>

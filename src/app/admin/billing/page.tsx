@@ -17,7 +17,7 @@ export default async function AdminBillingPage() {
     <div>
       <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700">Billing records</p>
       <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">Payment history</h1>
-      <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">Business কখন কোন package-এর জন্য কত payment করেছে—সেই record দেখো। এখানে payment নেওয়া বা payment method চালু করা হয় না।</p>
+      <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">Review which package each business paid for, when, and how much. This page does not accept payments or enable a payment method.</p>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         {[
@@ -29,11 +29,11 @@ export default async function AdminBillingPage() {
       </div>
 
       {!result.subscriptionDataAvailable && (
-        <div className="mt-6"><PlatformAdminDataNotice title="Payment history schema এখনো Supabase-এ নেই" description="Repository-র migration-এ package, amount, date ও status-এর table আছে। সেটি চালালে record এখানে দেখা যাবে; কোনো payment gateway যুক্ত হবে না।" /></div>
+        <div className="mt-6"><PlatformAdminDataNotice title="Payment history schema is not in Supabase yet" description="The repository migration creates tables for package, amount, date, and status. Apply it to show records here; no payment gateway is added." /></div>
       )}
 
       <section className="mt-6 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
-        <div className="border-b border-slate-100 px-5 py-4"><h2 className="font-semibold text-slate-900">Transactions</h2><p className="mt-1 text-xs text-slate-500">Package snapshot এবং payment record</p></div>
+        <div className="border-b border-slate-100 px-5 py-4"><h2 className="font-semibold text-slate-900">Transactions</h2><p className="mt-1 text-xs text-slate-500">Package snapshots and payment records</p></div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[760px] text-left text-xs text-slate-500">
             <thead className="bg-slate-50 uppercase tracking-wide"><tr>{["Payment date", "Business", "Package", "Amount", "Reference", "Status"].map((column) => <th key={column} className="px-4 py-3 font-semibold">{column}</th>)}</tr></thead>
@@ -49,10 +49,10 @@ export default async function AdminBillingPage() {
                 </tr>
               ))}
               {result.subscriptionDataAvailable && payments.length === 0 && (
-                <tr><td colSpan={6} className="px-5 py-12 text-center"><p className="text-sm font-semibold text-slate-800">Payment history এখনো নেই</p><p className="mt-2 text-xs text-slate-500">এখনো কোনো payment record যোগ করা হয়নি।</p></td></tr>
+                <tr><td colSpan={6} className="px-5 py-12 text-center"><p className="text-sm font-semibold text-slate-800">No payment records yet</p><p className="mt-2 text-xs text-slate-500">No payment records have been added yet.</p></td></tr>
               )}
               {!result.subscriptionDataAvailable && (
-                <tr><td colSpan={6} className="px-5 py-12 text-center text-xs text-slate-500">Migration চালানোর পর এখানে payment record আসবে।</td></tr>
+                <tr><td colSpan={6} className="px-5 py-12 text-center text-xs text-slate-500">Payment records will appear here after the migration is applied.</td></tr>
               )}
             </tbody>
           </table>

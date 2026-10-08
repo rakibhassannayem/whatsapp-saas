@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import PageHeader from "@/components/dashboard/page-header";
 import AddCustomerTabs from "@/components/dashboard/customers/new/add-customer-tabs";
+import { getActiveDashboardBusiness, getDashboardBusinesses } from "@/lib/supabase/dashboard-business";
 
 export default async function NewCustomerPage() {
   const supabase = await createClient();
@@ -12,12 +13,8 @@ export default async function NewCustomerPage() {
     redirect("/login");
   }
 
-  const { data: business } = await supabase
-    .from("businesses")
-    .select("id, name")
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
+  const { data: businesses } = await getDashboardBusinesses(supabase);
+  const business = await getActiveDashboardBusiness(businesses ?? []);
 
   if (!business) {
     return (

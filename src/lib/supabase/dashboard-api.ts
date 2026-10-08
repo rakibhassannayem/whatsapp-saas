@@ -1,4 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
+import {
+  getActiveDashboardBusiness,
+  getDashboardBusinesses,
+} from "@/lib/supabase/dashboard-business";
 
 export async function getDashboardContext() {
   const supabase = await createClient();
@@ -10,12 +14,9 @@ export async function getDashboardContext() {
     } as const;
   }
 
-  const { data: business, error: businessError } = await supabase
-    .from("businesses")
-    .select("id")
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
+  const { data: businesses, error: businessError } =
+    await getDashboardBusinesses(supabase);
+  const business = await getActiveDashboardBusiness(businesses ?? []);
 
   if (businessError) {
     return {

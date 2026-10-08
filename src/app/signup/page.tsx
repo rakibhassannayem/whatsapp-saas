@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import Link from "next/link";
+import AuthAwareLink from "@/components/common/auth-aware-link";
 import { Eye, EyeOff, Lock, Mail, UserRound, UserPlus } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import AuthShell from "@/components/auth/auth-shell";
@@ -55,9 +55,9 @@ export default function SignupPage() {
       footer={
         <>
           Already have an account?{" "}
-          <Link href="/login" className="font-semibold text-emerald-600 hover:text-emerald-700">
+          <AuthAwareLink href="/login" className="font-semibold text-emerald-600 hover:text-emerald-700">
             Log in
-          </Link>{" "}
+          </AuthAwareLink>{" "}
           to continue broadcasting.
         </>
       }

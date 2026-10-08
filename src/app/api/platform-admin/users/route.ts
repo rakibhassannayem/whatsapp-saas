@@ -45,14 +45,14 @@ export async function PATCH(request: Request) {
     (action !== "suspend" && action !== "reactivate")
   ) {
     return Response.json(
-      { error: "User ID বা action সঠিক নয়।" },
+      { error: "User ID or action is invalid." },
       { status: 400 },
     );
   }
 
   if (userId === context.user.id) {
     return Response.json(
-      { error: "নিজের platform admin account suspend করা যাবে না।" },
+      { error: "You cannot suspend your own platform admin account." },
       { status: 409 },
     );
   }
@@ -72,21 +72,21 @@ export async function PATCH(request: Request) {
 
   if (roleError || membershipError) {
     return Response.json(
-      { error: "User account যাচাই করা যায়নি।" },
+      { error: "Could not verify the user account." },
       { status: 500 },
     );
   }
   if (isPlatformAdmin) {
     return Response.json(
       {
-        error: "Platform admin account এই dashboard থেকে suspend করা যাবে না।",
+        error: "Platform admin accounts cannot be suspended from this dashboard.",
       },
       { status: 409 },
     );
   }
   if (!count) {
     return Response.json(
-      { error: "Business user পাওয়া যায়নি।" },
+      { error: "Business user not found." },
       { status: 404 },
     );
   }
@@ -100,7 +100,7 @@ export async function PATCH(request: Request) {
 
   if (error) {
     return Response.json(
-      { error: "User account-এর status বদলানো যায়নি।" },
+      { error: "Could not update the user account status." },
       { status: 500 },
     );
   }

@@ -5,7 +5,15 @@ import Link from "next/link";
 import { Menu, MessagesSquare, X } from "lucide-react";
 import { SidebarContent, type DashboardUser } from "./app-sidebar";
 
-export default function DashboardMobileNav({ user }: { user: DashboardUser }) {
+export default function DashboardMobileNav({
+  user,
+  businesses,
+  activeBusinessId,
+}: {
+  user: DashboardUser;
+  businesses: { id: string; name: string }[];
+  activeBusinessId: string | null;
+}) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -59,7 +67,12 @@ export default function DashboardMobileNav({ user }: { user: DashboardUser }) {
             >
               <X className="size-4" />
             </button>
-            <SidebarContent user={user} onNavigate={() => setOpen(false)} />
+            <SidebarContent
+              user={user}
+              businesses={businesses}
+              activeBusinessId={activeBusinessId}
+              onNavigate={() => setOpen(false)}
+            />
           </div>
         </div>
       )}

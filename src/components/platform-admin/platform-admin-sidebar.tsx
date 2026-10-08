@@ -8,12 +8,14 @@ import {
   CreditCard,
   LayoutDashboard,
   ScrollText,
+  ShieldCheck,
 } from "lucide-react";
 import PlatformAdminLogoutButton from "@/components/platform-admin/platform-admin-logout-button";
 
 const navigation = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard },
   { href: "/admin/businesses", label: "Business & owners", icon: Building2 },
+  { href: "/admin/platform-admins", label: "Platform admins", icon: ShieldCheck },
   { href: "/admin/campaigns", label: "Campaign activity", icon: Activity },
   { href: "/admin/subscriptions", label: "Subscriptions", icon: ScrollText },
   { href: "/admin/billing", label: "Payment history", icon: CreditCard },

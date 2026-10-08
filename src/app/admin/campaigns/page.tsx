@@ -14,21 +14,21 @@ export default async function AdminCampaignsPage() {
     <div>
       <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700">Usage activity</p>
       <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">Campaign activity</h1>
-      <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">Campaign-এর নাম, business, status ও recipient-list size দেখো। Message body ও customer contact detail এখানে দেখানো হয় না।</p>
+      <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">Review campaign names, businesses, status, and audience size. Message bodies and customer contact details are not shown here.</p>
 
       <section className="mt-6 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 sm:px-6">
           <div>
-            <h2 className="font-semibold text-slate-900">সব campaign <span className="ml-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">{campaigns.length}</span></h2>
-            <p className="mt-1 text-xs text-slate-500">Campaign recipient count sent message count নয়।</p>
+            <h2 className="font-semibold text-slate-900">All campaigns <span className="ml-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">{campaigns.length}</span></h2>
+            <p className="mt-1 text-xs text-slate-500">Audience size is not the same as messages sent.</p>
           </div>
           <Megaphone className="size-5 text-emerald-600" />
         </div>
         {campaigns.length === 0 ? (
           <div className="p-10 text-center">
             <Activity className="mx-auto size-7 text-slate-300" />
-            <p className="mt-3 text-sm font-medium text-slate-800">এখনো কোনো campaign নেই</p>
-            <p className="mt-1 text-xs text-slate-500">Business owner-রা campaign তৈরি করলে এখানে দেখা যাবে।</p>
+            <p className="mt-3 text-sm font-medium text-slate-800">No campaigns yet</p>
+            <p className="mt-1 text-xs text-slate-500">Campaigns will appear here after a business owner creates one.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -52,7 +52,7 @@ export default async function AdminCampaignsPage() {
         )}
       </section>
       <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-900">
-        এখনকার database campaign ও audience selection রাখে; Meta-তে পাঠানো প্রতিটি message-এর delivery log রাখে না। তাই sent/delivered count অনুমান করে দেখানো হচ্ছে না।
+        The current database stores campaigns and audience selections, but not delivery logs for messages sent through Meta. Sent and delivered totals are not estimated.
       </p>
     </div>
   );

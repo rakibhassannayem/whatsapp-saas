@@ -47,7 +47,7 @@ export async function PATCH(request: Request) {
     name.trim().length > 120
   ) {
     return Response.json(
-      { error: "Business ID বা নাম সঠিক নয়। নাম 1–120 অক্ষরের হতে হবে।" },
+      { error: "Business ID or name is invalid. The name must be 1–120 characters." },
       { status: 400 },
     );
   }
@@ -61,12 +61,12 @@ export async function PATCH(request: Request) {
 
   if (error) {
     return Response.json(
-      { error: "Business name update করা যায়নি।" },
+      { error: "Could not update the business name." },
       { status: 500 },
     );
   }
   if (!data) {
-    return Response.json({ error: "Business পাওয়া যায়নি।" }, { status: 404 });
+    return Response.json({ error: "Business not found." }, { status: 404 });
   }
 
   return Response.json({ business: data });

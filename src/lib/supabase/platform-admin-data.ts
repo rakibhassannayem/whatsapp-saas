@@ -2,6 +2,56 @@ import "server-only";
 
 import { getPlatformAdminServiceContext } from "@/lib/supabase/platform-admin";
 import type { PlatformAdminBusiness } from "@/types/platform-admin";
+import type { PlatformAdminAccount } from "@/types/platform-admin";
+
+export async function getPlatformAdminAccounts() {
+  const context = await getPlatformAdminServiceContext();
+  if (context.status !== "authorized") return context;
+
+  const { data: adminRows, error } = await context.serviceClient.rpc(
+    "list_platform_admins",
+  );
+  if (error) return { status: "data-unavailable" as const };
+
+  const rows = (adminRows ?? []) as {
+    user_id: string;
+    created_at: string;
+    activated_at: string | null;
+  }[];
+  const accounts = await Promise.all(
+    rows.map(async (row) => {
+      const { data, error: userError } =
+        await context.serviceClient.auth.admin.getUserById(row.user_id);
+      if (userError || !data.user) return null;
+
+      const bannedUntil = data.user.banned_until
+        ? Date.parse(data.user.banned_until)
+        : Number.NaN;
+      const isSuspended = Number.isFinite(bannedUntil) && bannedUntil > Date.now();
+
+      return {
+        id: data.user.id,
+        email: data.user.email ?? null,
+        createdAt: row.created_at,
+        status: isSuspended
+          ? ("suspended" as const)
+          : row.activated_at
+            ? ("active" as const)
+            : ("invitation pending" as const),
+      };
+    }),
+  );
+
+  if (accounts.some((account) => account === null)) {
+    return { status: "auth-data-unavailable" as const };
+  }
+
+  return {
+    status: "authorized" as const,
+    currentUserId: context.user.id,
+    accounts: accounts.filter((account): account is PlatformAdminAccount => account !== null),
+  };
+}
 
 export async function getPlatformAdminBusinesses() {
   const context = await getPlatformAdminServiceContext();
@@ -10,7 +60,7 @@ export async function getPlatformAdminBusinesses() {
   const { data: businessRows, error: businessesError } =
     await context.serviceClient
       .from("businesses")
-      .select("id, name, created_at")
+      .select("id, name, created_at, created_by")
       .order("created_at", { ascending: false });
 
   if (businessesError) return { status: "data-unavailable" as const };
@@ -131,7 +181,14 @@ export async function getPlatformAdminBusinesses() {
     campaignsByBusiness.set(campaign.business_id, businessCampaigns);
   }
 
-  const userIds = [...new Set(memberships.map(({ user_id }) => user_id))];
+  const userIds = [
+    ...new Set([
+      ...memberships.map(({ user_id }) => user_id),
+      ...businessRows.flatMap((business) =>
+        business.created_by ? [business.created_by] : [],
+      ),
+    ]),
+  ];
   const profilesById = new Map<string, string | null>();
   const usersById = new Map<
     string,
@@ -216,27 +273,32 @@ export async function getPlatformAdminBusinesses() {
     membershipsByBusiness.set(membership.business_id, memberIds);
   }
 
+  function getUserSummary(userId: string) {
+    const user = usersById.get(userId);
+    if (!user) return null;
+    return {
+      id: userId,
+      fullName: profilesById.get(userId) ?? null,
+      email: user.email,
+      status: user.status,
+      role: user.role,
+    };
+  }
+
   const businesses: PlatformAdminBusiness[] = businessRows.map((business) => ({
     id: business.id,
     name: business.name,
     createdAt: business.created_at,
+    ownerUserId: business.created_by,
+    owner: business.created_by ? getUserSummary(business.created_by) : null,
     customerCount: customerCounts.get(business.id) ?? 0,
     campaigns: campaignsByBusiness.get(business.id) ?? [],
     subscription: subscriptionByBusiness.get(business.id) ?? null,
     payments: paymentsByBusiness.get(business.id) ?? [],
     users: [...(membershipsByBusiness.get(business.id) ?? [])].flatMap(
       (userId) => {
-        const user = usersById.get(userId);
-        if (!user) return [];
-        return [
-          {
-            id: userId,
-            fullName: profilesById.get(userId) ?? null,
-            email: user.email,
-            status: user.status,
-            role: user.role,
-          },
-        ];
+        const user = getUserSummary(userId);
+        return user ? [user] : [];
       },
     ),
   }));

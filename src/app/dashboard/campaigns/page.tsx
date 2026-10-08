@@ -4,6 +4,7 @@ import { Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import PageHeader from "@/components/dashboard/page-header";
 import CampaignsManager from "@/components/dashboard/campaigns/campaigns-manager";
+import { getActiveDashboardBusiness, getDashboardBusinesses } from "@/lib/supabase/dashboard-business";
 
 export default async function CampaignsPage() {
   const supabase = await createClient();
@@ -13,12 +14,8 @@ export default async function CampaignsPage() {
     redirect("/login");
   }
 
-  const { data: business, error: businessError } = await supabase
-    .from("businesses")
-    .select("id, name")
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
+  const { data: businesses, error: businessError } = await getDashboardBusinesses(supabase);
+  const business = await getActiveDashboardBusiness(businesses ?? []);
 
   if (businessError) {
     return (

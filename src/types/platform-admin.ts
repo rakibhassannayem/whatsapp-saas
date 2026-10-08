@@ -1,7 +1,24 @@
+export type PlatformAdminAccount = {
+  id: string;
+  email: string | null;
+  createdAt: string;
+  status: "active" | "suspended" | "invitation pending";
+};
+
+export type PlatformAdminBusinessUser = {
+  id: string;
+  fullName: string | null;
+  email: string | null;
+  status: "active" | "suspended";
+  role: "platform_admin" | "business_user";
+};
+
 export type PlatformAdminBusiness = {
   id: string;
   name: string;
   createdAt: string;
+  ownerUserId: string | null;
+  owner: PlatformAdminBusinessUser | null;
   customerCount: number;
   campaigns: {
     id: string;
@@ -31,11 +48,5 @@ export type PlatformAdminBusiness = {
     paymentReference: string | null;
     createdAt: string;
   }[];
-  users: {
-    id: string;
-    fullName: string | null;
-    email: string | null;
-    status: "active" | "suspended";
-    role: "platform_admin" | "business_user";
-  }[];
+  users: PlatformAdminBusinessUser[];
 };

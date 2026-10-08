@@ -5,7 +5,7 @@ export async function POST() {
   const { error } = await supabase.auth.signOut();
 
   if (error) {
-    return Response.json({ error: "Admin logout করা যায়নি।" }, { status: 500 });
+    return Response.json({ error: "Could not log out of the admin console." }, { status: 500 });
   }
 
   return Response.json({ success: true });

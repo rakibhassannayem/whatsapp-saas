@@ -1,4 +1,4 @@
-import Link from "next/link";
+import AuthAwareLink from "@/components/common/auth-aware-link";
 import { BadgeCheck, FileSpreadsheet, Tags, Megaphone } from "lucide-react";
 
 export function HowItWorks() {
@@ -24,7 +24,7 @@ export function HowItWorks() {
           <span className="flex items-center gap-1.5"><BadgeCheck className="size-4" />Personalized with customer name.</span>
           <span className="flex items-center gap-1.5"><BadgeCheck className="size-4" />Works with your existing WhatsApp number.</span>
         </div>
-        <Link href="/signup" className="mt-6 inline-block rounded-full bg-emerald-400 px-6 py-2.5 text-[12px] font-bold text-emerald-950">START MY FIRST BROADCAST</Link>
+        <AuthAwareLink href="/signup" className="mt-6 inline-block rounded-full bg-emerald-400 px-6 py-2.5 text-[12px] font-bold text-emerald-950">START MY FIRST BROADCAST</AuthAwareLink>
       </div>
     </section>
   );

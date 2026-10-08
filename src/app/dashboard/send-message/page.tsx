@@ -4,6 +4,7 @@ import PageHeader from "@/components/dashboard/page-header";
 import SendMessageManager from "@/components/dashboard/send-message/send-message-manager";
 import Link from "next/link";
 import { Plus } from "lucide-react";
+import { getActiveDashboardBusiness, getDashboardBusinesses } from "@/lib/supabase/dashboard-business";
 
 export default async function SendMessagePage() {
   const supabase = await createClient();
@@ -13,12 +14,8 @@ export default async function SendMessagePage() {
     redirect("/login");
   }
 
-  const { data: business, error: businessError } = await supabase
-    .from("businesses")
-    .select("id, name")
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
+  const { data: businesses, error: businessError } = await getDashboardBusinesses(supabase);
+  const business = await getActiveDashboardBusiness(businesses ?? []);
 
   if (businessError) {
     return (

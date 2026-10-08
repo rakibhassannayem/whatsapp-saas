@@ -4,6 +4,7 @@ import { ArrowLeft, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import PageHeader, { HeaderAction } from "@/components/dashboard/page-header";
 import CampaignAudienceManager from "@/components/dashboard/campaigns/campaign-details/campaign-audience-manager";
+import { getActiveDashboardBusiness, getDashboardBusinesses } from "@/lib/supabase/dashboard-business";
 import type { CampaignAudiencePageProps } from "@/types/campaign";
 
 export default async function CampaignAudiencePage({
@@ -17,12 +18,8 @@ export default async function CampaignAudiencePage({
     redirect("/login");
   }
 
-  const { data: business, error: businessError } = await supabase
-    .from("businesses")
-    .select("id, name")
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
+  const { data: businesses, error: businessError } = await getDashboardBusinesses(supabase);
+  const business = await getActiveDashboardBusiness(businesses ?? []);
 
   if (businessError) {
     return (

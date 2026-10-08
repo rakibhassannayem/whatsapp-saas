@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { SidebarContent } from "@/components/dashboard/app-sidebar";
 import DashboardMobileNav from "@/components/dashboard/dashboard-mobile-nav";
 import type { DashboardLayoutProps, DashboardUser } from "@/types/dashboard";
+import { getActiveDashboardBusiness, getDashboardBusinesses } from "@/lib/supabase/dashboard-business";
 
 async function getSidebarUser(): Promise<DashboardUser> {
   const supabase = await createClient();
@@ -30,12 +31,23 @@ export default async function DashboardLayout({
   if (!data.user) redirect("/login");
 
   const user = await getSidebarUser();
+  const { data: businesses } = await getDashboardBusinesses(supabase);
+  const availableBusinesses = businesses ?? [];
+  const activeBusiness = await getActiveDashboardBusiness(availableBusinesses);
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <DashboardMobileNav user={user} />
+      <DashboardMobileNav
+        user={user}
+        businesses={availableBusinesses}
+        activeBusinessId={activeBusiness?.id ?? null}
+      />
       <aside className="fixed inset-y-0 left-0 hidden w-64 shrink-0 border-r border-slate-200 bg-white lg:block">
-        <SidebarContent user={user} />
+        <SidebarContent
+          user={user}
+          businesses={availableBusinesses}
+          activeBusinessId={activeBusiness?.id ?? null}
+        />
       </aside>
       <div className="min-w-0 lg:pl-64">
         <div className="mx-auto max-w-6xl p-5 sm:p-8">{children}</div>

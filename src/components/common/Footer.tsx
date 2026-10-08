@@ -1,4 +1,5 @@
 import Link from "next/link";
+import AuthAwareLink from "@/components/common/auth-aware-link";
 
 export function Footer() {
   return (
@@ -20,12 +21,12 @@ export function Footer() {
             >
               See a broadcast demo
             </Link>
-            <Link
+            <AuthAwareLink
               href="/signup"
               className="rounded-full bg-[#1a2340] px-4 py-2 text-[12px] font-bold text-white"
             >
               Start Broadcasting Free
-            </Link>
+            </AuthAwareLink>
           </div>
         </div>
         <div className="flex items-center justify-center gap-3 p-6">
@@ -73,12 +74,12 @@ export function Footer() {
           <p className="mt-1 text-[11px] text-slate-400">
             Bulk custom msgs — no bot.
           </p>
-          <Link
+          <AuthAwareLink
             href="/login"
             className="mt-1 inline-block text-[12px] underline"
           >
             Sign in
-          </Link>
+          </AuthAwareLink>
         </div>
       </div>
       <div className="h-6" />

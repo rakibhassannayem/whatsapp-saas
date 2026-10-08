@@ -1,4 +1,5 @@
 import Link from "next/link";
+import AuthAwareLink from "@/components/common/auth-aware-link";
 import { Check, CheckCheck, MessageCircle, Sparkles } from "lucide-react";
 
 export function Banner() {
@@ -114,7 +115,7 @@ export function SubscriptionPlans() {
                 </li>
               ))}
             </ul>
-            <Link
+            <AuthAwareLink
               href="/signup"
               className={`mt-7 inline-flex w-full items-center justify-center rounded-xl px-4 py-3 text-sm font-semibold transition ${
                 period.featured
@@ -123,7 +124,7 @@ export function SubscriptionPlans() {
               }`}
             >
               Account তৈরি করো
-            </Link>
+            </AuthAwareLink>
             <p className={`mt-3 text-center text-[11px] ${period.featured ? "text-emerald-100/60" : "text-slate-400"}`}>
               এখনো online payment চালু হয়নি
             </p>

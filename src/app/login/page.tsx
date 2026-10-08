@@ -1,4 +1,5 @@
 import Link from "next/link";
+import AuthAwareLink from "@/components/common/auth-aware-link";
 import AuthShell from "@/components/auth/auth-shell";
 import LoginForm from "@/components/auth/login-form";
 
@@ -10,9 +11,9 @@ export default function LoginPage() {
       footer={
         <>
           New here?{" "}
-          <Link href="/signup" className="font-semibold text-emerald-600 hover:text-emerald-700">
+          <AuthAwareLink href="/signup" className="font-semibold text-emerald-600 hover:text-emerald-700">
             Create a free account
-          </Link>{" "}
+          </AuthAwareLink>{" "}
           — upload your Excel list and send your first broadcast today.
           <p className="mt-3">
             Platform admin?{" "}

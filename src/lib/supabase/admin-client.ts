@@ -7,6 +7,7 @@ export function createAdminClient() {
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
     {
       cookieOptions: { name: ADMIN_AUTH_COOKIE_NAME },
+      auth: { detectSessionInUrl: false },
       // @supabase/ssr caches one default client; admin needs a distinct client.
       isSingleton: false,
     },

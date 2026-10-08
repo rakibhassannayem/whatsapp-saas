@@ -45,12 +45,12 @@ export default function PlatformAdminManager({
       });
       const result = await response.json();
       if (!response.ok)
-        throw new Error(result.error ?? "Business update করা যায়নি।");
-      setMessage("Business-এর নাম update হয়েছে।");
+        throw new Error(result.error ?? "Could not update the business.");
+      setMessage("Business name updated.");
       router.refresh();
     } catch (error) {
       setMessage(
-        error instanceof Error ? error.message : "Business update করা যায়নি।",
+        error instanceof Error ? error.message : "Could not update the business.",
       );
     } finally {
       setBusyKey("");
@@ -69,18 +69,18 @@ export default function PlatformAdminManager({
       });
       const result = await response.json();
       if (!response.ok)
-        throw new Error(result.error ?? "Account status update করা যায়নি।");
+        throw new Error(result.error ?? "Could not update the account status.");
       setMessage(
         action === "suspend"
-          ? "User account suspend হয়েছে।"
-          : "User account reactivate হয়েছে।",
+          ? "User account suspended."
+          : "User account reactivated.",
       );
       router.refresh();
     } catch (error) {
       setMessage(
         error instanceof Error
           ? error.message
-          : "Account status update করা যায়নি।",
+          : "Could not update the account status.",
       );
     } finally {
       setBusyKey("");
@@ -97,12 +97,12 @@ export default function PlatformAdminManager({
 
       <label className="block max-w-lg">
         <span className="mb-2 block text-sm font-medium text-slate-700">
-          Business বা owner খুঁজুন
+          Search this owner’s businesses
         </span>
         <input
           className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
           type="search"
-          placeholder="Business name, user name বা email"
+          placeholder="Business name"
           value={search}
           onChange={(event) => setSearch(event.target.value)}
         />
@@ -110,12 +110,12 @@ export default function PlatformAdminManager({
 
       {businesses.length === 0 ? (
         <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600">
-          এখনো কোনো business তৈরি হয়নি।
+          No businesses have been created yet.
         </div>
       ) : (
         visibleBusinesses.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500">
-            এই search-এর সঙ্গে মেলে এমন business নেই।
+            No businesses match this search.
           </div>
         ) : visibleBusinesses.map((business) => (
           <section
@@ -130,7 +130,7 @@ export default function PlatformAdminManager({
                   {business.name}
                 </h2>
                 <p className="mt-1 text-xs text-slate-500">
-                  তৈরি:{" "}
+                  Created:{" "}
                   <time dateTime={business.createdAt}>
                     {business.createdAt.slice(0, 10)}
                   </time>
@@ -143,7 +143,7 @@ export default function PlatformAdminManager({
                     {business.campaigns.length.toLocaleString()} campaigns
                   </span>
                   <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">
-                    Sent-message tracking নেই
+                    Message tracking unavailable
                   </span>
                 </div>
               </div>
@@ -172,7 +172,7 @@ export default function PlatformAdminManager({
                 >
                   {busyKey === `business:${business.id}`
                     ? "Saving…"
-                    : "নাম বদলাও"}
+                    : "Rename"}
                 </button>
               </form>
             </div>
@@ -182,8 +182,8 @@ export default function PlatformAdminManager({
                 <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Subscription</p>
                 <p className="mt-1 text-sm font-semibold text-slate-800">
                   {subscriptionDataAvailable
-                    ? business.subscription?.planName ?? "Plan record নেই"
-                    : "Schema migration দরকার"}
+                    ? business.subscription?.planName ?? "No plan record"
+                    : "Migration required"}
                 </p>
                 {business.subscription && (
                   <p className="mt-1 text-xs capitalize text-slate-500">
@@ -192,17 +192,17 @@ export default function PlatformAdminManager({
                 )}
               </div>
               <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">মেয়াদ ও ব্যবহার limit</p>
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Term & usage limits</p>
                 {business.subscription ? (
                   <p className="mt-1 text-xs leading-5 text-slate-600">
                     {business.subscription.expiresAt
-                      ? `শেষ ${business.subscription.expiresAt.slice(0, 10)}`
-                      : "মেয়াদ শেষের তারিখ নেই"}
-                    <br />গ্রাহক {business.subscription.customerLimit ?? "নির্ধারিত নয়"} · campaign {business.subscription.campaignLimit ?? "নির্ধারিত নয়"} · মাসিক message {business.subscription.monthlyMessageLimit ?? "নির্ধারিত নয়"}
+                      ? `Expires ${business.subscription.expiresAt.slice(0, 10)}`
+                      : "No expiry date"}
+                    <br />Customers {business.subscription.customerLimit ?? "Not set"} · campaigns {business.subscription.campaignLimit ?? "Not set"} · monthly messages {business.subscription.monthlyMessageLimit ?? "Not set"}
                   </p>
                 ) : (
                   <p className="mt-1 text-sm text-slate-600">
-                    {subscriptionDataAvailable ? "কোনো active/history record নেই" : "Subscription schema যোগ হলে দেখাবে"}
+                    {subscriptionDataAvailable ? "No subscription records" : "Apply the subscription migration to enable this"}
                   </p>
                 )}
               </div>
@@ -210,16 +210,16 @@ export default function PlatformAdminManager({
                 <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Payment history</p>
                 <p className="mt-1 text-sm text-slate-600">
                   {business.payments.length === 0
-                    ? subscriptionDataAvailable ? "কোনো payment record নেই" : "Schema migration দরকার"
-                    : `${business.payments.length} record · সর্বশেষ ${business.payments[0].amount.toLocaleString()} ${business.payments[0].currency}`}
+                    ? subscriptionDataAvailable ? "No payment records" : "Migration required"
+                    : `${business.payments.length} records · latest ${business.payments[0].amount.toLocaleString()} ${business.payments[0].currency}`}
                 </p>
               </div>
             </div>
 
             <div className="mt-5 border-t border-slate-100 pt-4">
-              <h3 className="text-sm font-semibold text-slate-800">Campaign তালিকা</h3>
+              <h3 className="text-sm font-semibold text-slate-800">Campaigns</h3>
               {business.campaigns.length === 0 ? (
-                <p className="mt-2 text-sm text-slate-500">এখনো campaign তৈরি হয়নি।</p>
+                <p className="mt-2 text-sm text-slate-500">No campaigns have been created yet.</p>
               ) : (
                 <ul className="mt-3 divide-y divide-slate-100">
                   {business.campaigns.map((campaign) => (
@@ -234,7 +234,7 @@ export default function PlatformAdminManager({
                 </ul>
               )}
               <p className="mt-3 text-xs leading-5 text-slate-500">
-                এখানে campaign-এর নাম, অবস্থা ও নির্বাচিত audience count দেখা যাচ্ছে। আসলে পাঠানো message-এর হিসাব বর্তমান database-এ সংরক্ষিত হয় না।
+                Campaign names, status, and selected audience counts are shown here. Actual sent-message totals are not stored in the current database.
               </p>
             </div>
 
@@ -244,7 +244,7 @@ export default function PlatformAdminManager({
               </h3>
               {business.users.length === 0 ? (
                 <p className="mt-2 text-sm text-slate-500">
-                  এই business-এ কোনো member নেই।
+                  This business has no members.
                 </p>
               ) : (
                 <ul className="mt-3 divide-y divide-slate-100">
@@ -255,10 +255,10 @@ export default function PlatformAdminManager({
                     >
                       <div className="min-w-0">
                         <p className="truncate text-sm font-medium text-slate-900">
-                          {user.fullName || "নাম দেওয়া হয়নি"}
+                          {user.fullName || "No name provided"}
                         </p>
                         <p className="truncate text-sm text-slate-500">
-                          {user.email || "Email নেই"}
+                          {user.email || "No email"}
                         </p>
                         <p className="mt-1 text-xs text-slate-500">
                           {user.role === "platform_admin"

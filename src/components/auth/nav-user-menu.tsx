@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import AuthAwareLink from "@/components/common/auth-aware-link";
 import { useRouter } from "next/navigation";
 import { ChevronDown, LayoutDashboard, LogOut, Megaphone } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -91,18 +92,18 @@ export default function NavUserMenu() {
   if (status === "signed-out" || !user) {
     return (
       <div className="flex items-center gap-1.5">
-        <Link
+        <AuthAwareLink
           href="/login"
           className="rounded-full px-4 py-2 text-[12px] font-bold text-slate-600 transition hover:bg-slate-100 hover:text-slate-950"
         >
           LOG IN
-        </Link>
-        <Link
+        </AuthAwareLink>
+        <AuthAwareLink
           href="/signup"
           className="rounded-full bg-emerald-500 px-4 py-2 text-[12px] font-bold text-white hover:bg-emerald-600"
         >
           START BROADCASTING
-        </Link>
+        </AuthAwareLink>
       </div>
     );
   }
