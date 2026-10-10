@@ -33,7 +33,7 @@ export default async function AdminSubscriptionsPage() {
       </div>
 
       {!result.subscriptionDataAvailable && (
-        <div className="mt-6"><PlatformAdminDataNotice title="Subscription schema is not in Supabase yet" description="Run the repository migration to load Monthly/Yearly plans, subscription terms, and customer/campaign/message limits here." /></div>
+        <div className="mt-6"><PlatformAdminDataNotice title="Subscription tables are not in local PostgreSQL yet" description="Plan terms and usage limits have not been moved into the local database, so this page cannot show subscription details yet." /></div>
       )}
 
       <section className="mt-6 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">

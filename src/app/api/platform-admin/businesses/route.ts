@@ -1,4 +1,7 @@
 import { getPlatformAdminServiceContext } from "@/lib/supabase/platform-admin";
+import { eq } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { businesses } from "@/lib/db/schema";
 
 const uuidPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -52,14 +55,13 @@ export async function PATCH(request: Request) {
     );
   }
 
-  const { data, error } = await context.serviceClient
-    .from("businesses")
-    .update({ name: name.trim() })
-    .eq("id", businessId)
-    .select("id, name")
-    .maybeSingle();
-
-  if (error) {
+  let data;
+  try {
+    [data] = await db.update(businesses)
+      .set({ name: name.trim() })
+      .where(eq(businesses.id, businessId))
+      .returning({ id: businesses.id, name: businesses.name });
+  } catch {
     return Response.json(
       { error: "Could not update the business name." },
       { status: 500 },

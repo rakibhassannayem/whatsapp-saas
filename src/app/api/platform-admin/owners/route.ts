@@ -1,4 +1,7 @@
 import { getPlatformAdminServiceContext } from "@/lib/supabase/platform-admin";
+import { eq } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { businessMemberships, businesses, profiles } from "@/lib/db/schema";
 
 const uuidPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -46,31 +49,28 @@ export async function DELETE(request: Request) {
   if (!userResult.user.email || confirmation.trim() !== userResult.user.email)
     return Response.json({ error: "The confirmation email does not match this account." }, { status: 400 });
 
-  const { data: removalResult, error: removalError } = await context.serviceClient.rpc(
-    "platform_admin_remove_business_owner",
-    { target_user_id: ownerId },
-  );
-  if (removalError) {
-    console.error("Platform admin owner removal failed:", {
-      code: removalError.code,
-      message: removalError.message,
-      details: removalError.details,
-      hint: removalError.hint,
+  let businessCount = 0;
+  try {
+    businessCount = await db.transaction(async (transaction) => {
+      const deletedBusinesses = await transaction.delete(businesses)
+        .where(eq(businesses.createdBy, ownerId))
+        .returning({ id: businesses.id });
+      if (deletedBusinesses.length === 0) return 0;
+
+      // Remove this account's memberships in other owners' businesses too.
+      await transaction.delete(businessMemberships)
+        .where(eq(businessMemberships.userId, ownerId));
+      await transaction.delete(profiles).where(eq(profiles.id, ownerId));
+      return deletedBusinesses.length;
     });
-    const guidance =
-      removalError.code === "PGRST202"
-        ? "The owner-removal database function is missing. Run the latest owner-removal migration in Supabase SQL Editor."
-        : removalError.code === "42P01"
-          ? "A table used by owner removal is missing from the database. Check that the app schema migrations have been applied."
-          : removalError.code === "23503"
-            ? `Another database table still references this business data (${removalError.message}). The database rolled back the cleanup; add that dependent table to the removal migration.`
-            : `The database rolled back the cleanup (${removalError.code ?? "unknown error"}). Check the server logs for details.`;
+  } catch (error) {
+    console.error("Local PostgreSQL owner removal failed:", error);
     return Response.json(
-      { error: guidance },
+      { error: "Could not remove the owner's local business data. The database transaction was rolled back." },
       { status: 500 },
     );
   }
-  if (!removalResult || removalResult.business_count < 1)
+  if (businessCount < 1)
     return Response.json({ error: "No businesses were found for this owner." }, { status: 404 });
 
   const { error: deleteUserError } = await context.serviceClient.auth.admin.deleteUser(ownerId);
@@ -81,5 +81,5 @@ export async function DELETE(request: Request) {
     );
   }
 
-  return Response.json({ success: true, businessCount: removalResult.business_count });
+  return Response.json({ success: true, businessCount });
 }

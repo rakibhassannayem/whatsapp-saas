@@ -1,150 +1,100 @@
+import { and, eq, inArray, notInArray } from "drizzle-orm";
 import {
   databaseErrorResponse,
   getDashboardContext,
   readJson,
 } from "@/lib/supabase/dashboard-api";
+import { db } from "@/lib/db";
+import { campaignRecipients, campaigns, customers } from "@/lib/db/schema";
 
 type RecipientBody = Record<string, unknown>;
+const maxRecipientsPerRequest = 1000;
 
-async function getOwnedCampaign(
-  supabase: Awaited<
-    ReturnType<typeof import("@/lib/supabase/server").createClient>
-  >,
-  businessId: string,
-  campaignId: string,
-) {
-  const { data, error } = await supabase
-    .from("campaigns")
-    .select("id")
-    .eq("id", campaignId)
-    .eq("business_id", businessId)
-    .maybeSingle();
+function readPgError(error: unknown) {
+  if (error && typeof error === "object" && "code" in error && "message" in error) {
+    return {
+      code: typeof error.code === "string" ? error.code : undefined,
+      message: typeof error.message === "string" ? error.message : "Database request failed.",
+    };
+  }
+  return { message: error instanceof Error ? error.message : "Database request failed." };
+}
 
-  if (error) return { kind: "error", error } as const;
-  if (!data) return { kind: "missing" } as const;
-  return { kind: "found", campaign: data } as const;
+async function findOwnedCampaign(businessId: string, campaignId: string) {
+  const [campaign] = await db.select({ id: campaigns.id }).from(campaigns).where(and(
+    eq(campaigns.id, campaignId), eq(campaigns.businessId, businessId),
+  )).limit(1);
+  return campaign;
+}
+
+function readIds(value: unknown) {
+  if (!Array.isArray(value) || value.length === 0 || value.length > maxRecipientsPerRequest || value.some((id) => typeof id !== "string")) return null;
+  return [...new Set(value as string[])];
 }
 
 export async function POST(request: Request) {
   const context = await getDashboardContext();
   if ("response" in context) return context.response;
-
   const parsed = await readJson<RecipientBody>(request);
   if ("response" in parsed) return parsed.response;
-  const { campaignId, customerIds } = parsed.data;
-
-  if (
-    typeof campaignId !== "string" ||
-    !Array.isArray(customerIds) ||
-    customerIds.length === 0 ||
-    customerIds.some((id) => typeof id !== "string")
-  ) {
-    return Response.json(
-      { error: "Campaign and customer IDs are required." },
-      { status: 400 },
-    );
+  const { campaignId } = parsed.data;
+  const customerIds = readIds(parsed.data.customerIds);
+  if (typeof campaignId !== "string" || !customerIds) {
+    return Response.json({ error: "Campaign and customer IDs are required." }, { status: 400 });
   }
 
-  const ownedCampaign = await getOwnedCampaign(
-    context.supabase,
-    context.business.id,
-    campaignId,
-  );
-  if (ownedCampaign.kind === "error") {
-    return databaseErrorResponse(ownedCampaign.error);
-  }
-  if (ownedCampaign.kind === "missing") {
-    return Response.json({ error: "Campaign was not found." }, { status: 404 });
-  }
+  try {
+    const campaign = await findOwnedCampaign(context.business.id, campaignId);
+    if (!campaign) return Response.json({ error: "Campaign was not found." }, { status: 404 });
 
-  const uniqueCustomerIds = [...new Set(customerIds as string[])];
-  const { data: customers, error: customersError } = await context.supabase
-    .from("customers")
-    .select("id")
-    .eq("business_id", context.business.id)
-    .in("id", uniqueCustomerIds);
-
-  if (customersError) return databaseErrorResponse(customersError);
-  if (customers?.length !== uniqueCustomerIds.length) {
-    return Response.json(
-      { error: "One or more customers were not found." },
-      { status: 404 },
-    );
-  }
-
-  const { error: addRecipientsError } = await context.supabase
-    .from("campaign_recipients")
-    .upsert(
-      uniqueCustomerIds.map((customerId) => ({
-        campaign_id: campaignId,
-        customer_id: customerId,
-      })),
-      { onConflict: "campaign_id,customer_id", ignoreDuplicates: true },
-    );
-
-  if (addRecipientsError) return databaseErrorResponse(addRecipientsError);
-
-  if (parsed.data.replaceExisting === true) {
-    const { error: removeRecipientsError } = await context.supabase
-      .from("campaign_recipients")
-      .delete()
-      .eq("campaign_id", campaignId)
-      .not("customer_id", "in", `(${uniqueCustomerIds.join(",")})`);
-
-    if (removeRecipientsError) {
-      return databaseErrorResponse(removeRecipientsError);
+    const foundCustomers = await db.select({ id: customers.id }).from(customers).where(and(
+      eq(customers.businessId, context.business.id), inArray(customers.id, customerIds),
+    ));
+    if (foundCustomers.length !== customerIds.length) {
+      return Response.json({ error: "One or more customers were not found." }, { status: 404 });
     }
-  }
 
-  return Response.json({ success: true }, { status: 201 });
+    await db.transaction(async (transaction) => {
+      await transaction.insert(campaignRecipients).values(customerIds.map((customerId) => ({ campaignId, customerId })))
+        .onConflictDoNothing({ target: [campaignRecipients.campaignId, campaignRecipients.customerId] });
+      if (parsed.data.replaceExisting === true) {
+        await transaction.delete(campaignRecipients).where(and(
+          eq(campaignRecipients.campaignId, campaignId),
+          notInArray(campaignRecipients.customerId, customerIds),
+        ));
+      }
+    });
+    return Response.json({ success: true }, { status: 201 });
+  } catch (error) {
+    return databaseErrorResponse(readPgError(error));
+  }
 }
 
 export async function DELETE(request: Request) {
   const context = await getDashboardContext();
   if ("response" in context) return context.response;
-
   const parsed = await readJson<RecipientBody>(request);
   if ("response" in parsed) return parsed.response;
-  const { campaignId, customerId, customerIds } = parsed.data;
-
+  const { campaignId, customerId } = parsed.data;
+  const customerIds = parsed.data.customerIds === undefined ? null : readIds(parsed.data.customerIds);
   if (
     typeof campaignId !== "string" ||
     (customerId !== undefined && typeof customerId !== "string") ||
-    (customerIds !== undefined &&
-      (!Array.isArray(customerIds) ||
-        customerIds.length === 0 ||
-        customerIds.some((id) => typeof id !== "string"))) ||
-    (customerId !== undefined && customerIds !== undefined)
+    (parsed.data.customerIds !== undefined && !customerIds) ||
+    (customerId !== undefined && parsed.data.customerIds !== undefined)
   ) {
-    return Response.json(
-      { error: "Campaign ID and valid customer IDs are required." },
-      { status: 400 },
-    );
+    return Response.json({ error: "Campaign ID and valid customer IDs are required." }, { status: 400 });
   }
 
-  const ownedCampaign = await getOwnedCampaign(
-    context.supabase,
-    context.business.id,
-    campaignId,
-  );
-  if (ownedCampaign.kind === "error") {
-    return databaseErrorResponse(ownedCampaign.error);
+  try {
+    const campaign = await findOwnedCampaign(context.business.id, campaignId);
+    if (!campaign) return Response.json({ error: "Campaign was not found." }, { status: 404 });
+    const conditions = [eq(campaignRecipients.campaignId, campaignId)];
+    if (typeof customerId === "string") conditions.push(eq(campaignRecipients.customerId, customerId));
+    if (customerIds) conditions.push(inArray(campaignRecipients.customerId, customerIds));
+    await db.delete(campaignRecipients).where(and(...conditions));
+    return Response.json({ success: true });
+  } catch (error) {
+    return databaseErrorResponse(readPgError(error));
   }
-  if (ownedCampaign.kind === "missing") {
-    return Response.json({ error: "Campaign was not found." }, { status: 404 });
-  }
-
-  let query = context.supabase
-    .from("campaign_recipients")
-    .delete()
-    .eq("campaign_id", campaignId);
-  if (typeof customerId === "string")
-    query = query.eq("customer_id", customerId);
-  if (Array.isArray(customerIds)) {
-    query = query.in("customer_id", [...new Set(customerIds as string[])]);
-  }
-
-  const { error } = await query;
-  if (error) return databaseErrorResponse(error);
-  return Response.json({ success: true });
 }

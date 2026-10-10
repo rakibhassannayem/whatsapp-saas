@@ -29,7 +29,7 @@ export default async function AdminBillingPage() {
       </div>
 
       {!result.subscriptionDataAvailable && (
-        <div className="mt-6"><PlatformAdminDataNotice title="Payment history schema is not in Supabase yet" description="The repository migration creates tables for package, amount, date, and status. Apply it to show records here; no payment gateway is added." /></div>
+        <div className="mt-6"><PlatformAdminDataNotice title="Payment history is not in local PostgreSQL yet" description="Payment history has not been moved into the local database. No payment gateway is connected." /></div>
       )}
 
       <section className="mt-6 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">

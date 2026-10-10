@@ -13,6 +13,9 @@ import { createClient } from "@/lib/supabase/server";
 import PageHeader, { HeaderAction } from "@/components/dashboard/page-header";
 import WhatsAppTestButton from "./whatsapp-test-button";
 import { getActiveDashboardBusiness, getDashboardBusinesses } from "@/lib/supabase/dashboard-business";
+import { count, eq } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { customers, tags } from "@/lib/db/schema";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -60,25 +63,21 @@ export default async function DashboardPage() {
     );
   }
 
-  const [
-    { count: customerCount, error: customersError },
-    { count: tagCount, error: tagsError },
-  ] = await Promise.all([
-    supabase
-      .from("customers")
-      .select("id", { count: "exact", head: true })
-      .eq("business_id", business.id),
-    supabase.from("tags").select("id", { count: "exact", head: true }).eq("business_id", business.id),
-  ]);
-
-  const countError = customersError ?? tagsError;
-
-  if (countError) {
+  let customerCount = 0;
+  let tagCount = 0;
+  try {
+    const [customerRows, tagRows] = await Promise.all([
+      db.select({ count: count() }).from(customers).where(eq(customers.businessId, business.id)),
+      db.select({ count: count() }).from(tags).where(eq(tags.businessId, business.id)),
+    ]);
+    customerCount = customerRows[0]?.count ?? 0;
+    tagCount = tagRows[0]?.count ?? 0;
+  } catch (countError) {
     return (
       <div>
         <PageHeader title="Dashboard" subtitle={business.name} />
         <p className="mt-4 rounded-xl bg-red-50 px-4 py-2.5 text-[13px] text-red-600">
-          Could not load summary: {countError.message}
+          Could not load summary: {countError instanceof Error ? countError.message : "Database request failed."}
         </p>
       </div>
     );
@@ -87,7 +86,7 @@ export default async function DashboardPage() {
   const stats = [
     {
       label: "Customers",
-      value: customerCount ?? 0,
+      value: customerCount,
       description: "Total contacts saved",
       href: "/dashboard/customers",
       icon: UsersRound,
@@ -95,7 +94,7 @@ export default async function DashboardPage() {
     },
     {
       label: "Tags",
-      value: tagCount ?? 0,
+      value: tagCount,
       description: "Groups for targeting",
       href: "/dashboard/tags",
       icon: Tags,

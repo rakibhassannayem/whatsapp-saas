@@ -5,6 +5,11 @@ import { createClient } from "@/lib/supabase/server";
 import PageHeader from "@/components/dashboard/page-header";
 import TagsManager from "@/components/dashboard/tags/tags-manager";
 import { getActiveDashboardBusiness, getDashboardBusinesses } from "@/lib/supabase/dashboard-business";
+import {
+  getBusinessCustomerTags,
+  getBusinessCustomers,
+  getBusinessTags,
+} from "@/lib/db/customer-queries";
 
 export default async function TagsPage() {
   const supabase = await createClient();
@@ -48,51 +53,21 @@ export default async function TagsPage() {
     );
   }
 
-  const { data: tags, error: tagsError } = await supabase
-    .from("tags")
-    .select("id, name, created_at")
-    .eq("business_id", business.id)
-    .order("name", { ascending: true });
-
-  if (tagsError) {
+  let tags: Awaited<ReturnType<typeof getBusinessTags>>;
+  let customers: Awaited<ReturnType<typeof getBusinessCustomers>>;
+  let customerTags: Awaited<ReturnType<typeof getBusinessCustomerTags>>;
+  try {
+    [tags, customers, customerTags] = await Promise.all([
+      getBusinessTags(business.id),
+      getBusinessCustomers(business.id, true),
+      getBusinessCustomerTags(business.id),
+    ]);
+  } catch (error) {
     return (
       <div>
         <PageHeader title="Tags" subtitle={business.name} />
         <p className="mt-4 rounded-xl bg-red-50 px-4 py-2.5 text-[13px] text-red-600">
-          Could not load tags: {tagsError.message}
-        </p>
-      </div>
-    );
-  }
-
-  const { data: customers, error: customersError } = await supabase
-    .from("customers")
-    .select("id, full_name, phone_e164, email")
-    .eq("business_id", business.id)
-    .order("full_name", { ascending: true });
-
-  if (customersError) {
-    return (
-      <div>
-        <PageHeader title="Tags" subtitle={business.name} />
-        <p className="mt-4 rounded-xl bg-red-50 px-4 py-2.5 text-[13px] text-red-600">
-          Could not load customers: {customersError.message}
-        </p>
-      </div>
-    );
-  }
-
-  const { data: customerTags, error: customerTagsError } = await supabase
-    .from("customer_tags")
-    .select("customer_id, tag_id")
-    .eq("business_id", business.id);
-
-  if (customerTagsError) {
-    return (
-      <div>
-        <PageHeader title="Tags" subtitle={business.name} />
-        <p className="mt-4 rounded-xl bg-red-50 px-4 py-2.5 text-[13px] text-red-600">
-          Could not load customer tags: {customerTagsError.message}
+          Could not load customer and tag data: {error instanceof Error ? error.message : "Database request failed."}
         </p>
       </div>
     );
@@ -102,13 +77,13 @@ export default async function TagsPage() {
     <div>
       <PageHeader
         title="Tags"
-        subtitle={`${business.name} • ${tags?.length ?? 0} tag${tags?.length === 1 ? "" : "s"}`}
+        subtitle={`${business.name} • ${tags.length} tag${tags.length === 1 ? "" : "s"}`}
       />
 
       <TagsManager
-        initialTags={tags ?? []}
-        initialCustomers={customers ?? []}
-        initialCustomerTags={customerTags ?? []}
+        initialTags={tags}
+        initialCustomers={customers}
+        initialCustomerTags={customerTags}
       />
     </div>
   );

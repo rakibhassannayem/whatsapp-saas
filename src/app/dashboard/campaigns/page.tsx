@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import PageHeader from "@/components/dashboard/page-header";
 import CampaignsManager from "@/components/dashboard/campaigns/campaigns-manager";
 import { getActiveDashboardBusiness, getDashboardBusinesses } from "@/lib/supabase/dashboard-business";
+import { getBusinessCampaigns, getBusinessMessageTemplates } from "@/lib/db/campaign-queries";
 
 export default async function CampaignsPage() {
   const supabase = await createClient();
@@ -51,86 +52,33 @@ export default async function CampaignsPage() {
     );
   }
 
-  const { data: templates, error: templatesError } = await supabase
-    .from("message_templates")
-    .select("id, name, body")
-    .eq("business_id", business.id)
-    .order("name", { ascending: true });
-
-  if (templatesError) {
+  let templates;
+  let campaignsWithAudience;
+  try {
+    [templates, campaignsWithAudience] = await Promise.all([
+      getBusinessMessageTemplates(business.id),
+      getBusinessCampaigns(business.id),
+    ]);
+  } catch (error) {
     return (
       <div>
         <PageHeader title="Campaigns" subtitle={business.name} />
         <p className="mt-4 rounded-xl bg-red-50 px-4 py-2.5 text-[13px] text-red-600">
-          Could not load templates: {templatesError.message}
+          Could not load campaign data: {error instanceof Error ? error.message : "Database request failed."}
         </p>
       </div>
     );
   }
-
-  const { data: campaigns, error: campaignsError } = await supabase
-    .from("campaigns")
-    .select("id, name, message_body, status, created_at")
-    .eq("business_id", business.id)
-    .order("created_at", { ascending: false });
-
-  if (campaignsError) {
-    return (
-      <div>
-        <PageHeader title="Campaigns" subtitle={business.name} />
-        <p className="mt-4 rounded-xl bg-red-50 px-4 py-2.5 text-[13px] text-red-600">
-          Could not load campaigns: {campaignsError.message}
-        </p>
-      </div>
-    );
-  }
-
-  const campaignIds = (campaigns ?? []).map((campaign) => campaign.id);
-  let recipientRows: { campaign_id: string }[] = [];
-
-  if (campaignIds.length > 0) {
-    const { data: recipients, error: recipientsError } = await supabase
-      .from("campaign_recipients")
-      .select("campaign_id")
-      .in("campaign_id", campaignIds);
-
-    if (recipientsError) {
-      return (
-        <div>
-          <PageHeader title="Campaigns" subtitle={business.name} />
-          <p className="mt-4 rounded-xl bg-red-50 px-4 py-2.5 text-[13px] text-red-600">
-            Could not load audience data: {recipientsError.message}
-          </p>
-        </div>
-      );
-    }
-
-    recipientRows = recipients ?? [];
-  }
-
-  const recipientCounts = new Map<string, number>();
-
-  for (const recipient of recipientRows) {
-    recipientCounts.set(
-      recipient.campaign_id,
-      (recipientCounts.get(recipient.campaign_id) ?? 0) + 1,
-    );
-  }
-
-  const campaignsWithAudience = (campaigns ?? []).map((campaign) => ({
-    ...campaign,
-    audience_count: recipientCounts.get(campaign.id) ?? 0,
-  }));
 
   return (
     <div>
       <PageHeader
         title="Campaigns"
-        subtitle={`${business.name} • ${campaigns?.length ?? 0} draft${campaigns?.length === 1 ? "" : "s"}`}
+        subtitle={`${business.name} • ${campaignsWithAudience.length} draft${campaignsWithAudience.length === 1 ? "" : "s"}`}
       />
       <CampaignsManager
         initialCampaigns={campaignsWithAudience}
-        initialTemplates={templates ?? []}
+        initialTemplates={templates}
       />
     </div>
   );

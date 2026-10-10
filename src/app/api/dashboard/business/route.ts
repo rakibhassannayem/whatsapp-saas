@@ -1,4 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
+import { and, eq } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { businesses } from "@/lib/db/schema";
 import {
   ACTIVE_BUSINESS_COOKIE,
   getDashboardBusinesses,
@@ -38,24 +41,13 @@ export async function POST(request: Request) {
     return Response.json({ error: "Business ID is required." }, { status: 400 });
   }
 
-  // RLS applies here, so users can only select a business they belong to.
-  const { data: business, error } = await context.supabase
-    .from("businesses")
-    .select("id")
-    .eq("id", businessId)
-    .maybeSingle();
-
+  const { data: availableBusinesses, error } = await getDashboardBusinesses(
+    context.supabase,
+  );
   if (error) {
-    const denied = error.code === "42501";
-    return Response.json(
-      {
-        error: denied
-          ? "You do not have permission to read this business. Check its SELECT grants and policies."
-          : error.message,
-      },
-      { status: denied ? 403 : 500 },
-    );
+    return Response.json({ error: error.message }, { status: 500 });
   }
+  const business = availableBusinesses?.find((item) => item.id === businessId);
   if (!business) {
     return Response.json({ error: "Business access was not found." }, { status: 404 });
   }
@@ -86,25 +78,41 @@ export async function PATCH(request: Request) {
     );
   }
 
-  // The signed-in user's RLS policies decide whether they can rename this row.
-  const { data: business, error } = await context.supabase
-    .from("businesses")
-    .update({ name })
-    .eq("id", businessId)
-    .select("id, name, created_at")
-    .maybeSingle();
-
-  if (error) {
-    const denied = error.code === "42501";
+  let updatedBusiness:
+    | { id: string; name: string; createdAt: Date }
+    | undefined;
+  try {
+    [updatedBusiness] = await db
+      .update(businesses)
+      .set({ name })
+      .where(
+        and(
+          eq(businesses.id, businessId),
+          eq(businesses.createdBy, context.user.id),
+        ),
+      )
+      .returning({
+        id: businesses.id,
+        name: businesses.name,
+        createdAt: businesses.createdAt,
+      });
+  } catch (cause) {
     return Response.json(
       {
-        error: denied
-          ? "Only the business creator can rename it. Confirm the owner permissions migration has been applied."
-          : error.message,
+        error:
+          cause instanceof Error ? cause.message : "Could not rename business.",
       },
-      { status: denied ? 403 : 500 },
+      { status: 500 },
     );
   }
+
+  const business = updatedBusiness
+    ? {
+        id: updatedBusiness.id,
+        name: updatedBusiness.name,
+        created_at: updatedBusiness.createdAt.toISOString(),
+      }
+    : null;
   if (!business) {
     return Response.json({ error: "Business access was not found." }, { status: 404 });
   }
@@ -131,26 +139,27 @@ export async function DELETE(request: Request) {
     return Response.json({ error: "Business access was not found." }, { status: 404 });
   }
 
-  // No service-role client is used; RLS controls the delete and its dependencies.
-  const { data: deleted, error } = await context.supabase
-    .from("businesses")
-    .delete()
-    .eq("id", businessId)
-    .select("id")
-    .maybeSingle();
-
-  if (error) {
-    const isForeignKeyError = error.code === "23503";
-    const isPermissionError = error.code === "42501";
+  let deleted: { id: string } | undefined;
+  try {
+    [deleted] = await db
+      .delete(businesses)
+      .where(
+        and(
+          eq(businesses.id, businessId),
+          eq(businesses.createdBy, context.user.id),
+        ),
+      )
+      .returning({ id: businesses.id });
+  } catch (cause) {
+    const message = cause instanceof Error ? cause.message : "Could not delete business.";
+    const isForeignKeyError = message.includes("foreign key");
     return Response.json(
       {
         error: isForeignKeyError
-          ? "This business still has records that prevent deletion. Resolve those records first, then try again."
-          : isPermissionError
-            ? "Only the business creator can delete it. Confirm the owner permissions migration has been applied."
-            : error.message,
+          ? "Related records prevented the business from being deleted."
+          : message,
       },
-      { status: isForeignKeyError ? 409 : isPermissionError ? 403 : 500 },
+      { status: isForeignKeyError ? 409 : 500 },
     );
   }
   if (!deleted) {

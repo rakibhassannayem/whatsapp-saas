@@ -4,22 +4,6 @@ import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Building2, Check, LoaderCircle, Sparkles } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
-
-type CreatedBusiness = { id?: string };
-
-function readCreatedBusinessId(value: unknown): string | null {
-  if (typeof value === "string") return value;
-  if (Array.isArray(value) && value[0] && typeof value[0] === "object") {
-    const id = (value[0] as CreatedBusiness).id;
-    return typeof id === "string" ? id : null;
-  }
-  if (value && typeof value === "object" && "id" in value) {
-    const id = (value as CreatedBusiness).id;
-    return typeof id === "string" ? id : null;
-  }
-  return null;
-}
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -39,53 +23,29 @@ export default function OnboardingPage() {
     setMessage("");
     setBusy(true);
 
-    const supabase = createClient();
-    const { data, error } = await supabase.rpc("create_business", {
-      p_name: name,
-    });
-
-    if (error) {
-      setMessage(error.message);
-      setBusy(false);
-      return;
-    }
-
-    let businessId = readCreatedBusinessId(data);
-
-    // Older versions of the RPC may return no ID. Find this user's newly
-    // created business through their normal, RLS-protected Supabase session.
-    if (!businessId) {
-      const { data: business } = await supabase
-        .from("businesses")
-        .select("id")
-        .eq("name", name)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      businessId = business?.id ?? null;
-    }
-
-    if (businessId) {
-      const response = await fetch("/api/dashboard/business", {
+    try {
+      const response = await fetch("/api/dashboard/businesses", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ businessId }),
+        body: JSON.stringify({ name }),
       });
 
+      const result = (await response.json().catch(() => null)) as
+        | { error?: string }
+        | null;
+
       if (!response.ok) {
-        const result = (await response.json().catch(() => null)) as
-          | { error?: string }
-          | null;
-        setMessage(
-          `Your business was created, but the dashboard could not switch to it. ${result?.error ?? "Refresh and choose it from the business menu."}`,
-        );
+        setMessage(result?.error ?? "Could not create your business.");
         setBusy(false);
         return;
       }
-    }
 
-    router.replace("/dashboard");
-    router.refresh();
+      router.replace("/dashboard");
+      router.refresh();
+    } catch {
+      setMessage("Could not connect to the app server. Please try again.");
+      setBusy(false);
+    }
   }
 
   return (

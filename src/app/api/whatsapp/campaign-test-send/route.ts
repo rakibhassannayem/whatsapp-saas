@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getDashboardContext, readJson } from "@/lib/supabase/dashboard-api";
+import { getBusinessCampaign } from "@/lib/db/campaign-queries";
 
 type TestSendRequestBody = Record<string, unknown> & {
   campaignId?: string;
@@ -11,7 +12,7 @@ export async function POST(request: Request) {
   if ("response" in context) {
     return context.response;
   }
-  const { supabase, business } = context;
+  const { business } = context;
 
   // ২. রিকোয়েস্ট বডি থেকে campaignId রিড করা
   const bodyResult = await readJson<TestSendRequestBody>(request);
@@ -28,14 +29,17 @@ export async function POST(request: Request) {
   }
 
   // ৩. ক্যাম্পেইনটি এই ইউজারের বিজনেসের কি না যাচাই
-  const { data: campaign, error: campaignError } = await supabase
-    .from("campaigns")
-    .select("id, name")
-    .eq("id", campaignId)
-    .eq("business_id", business.id)
-    .maybeSingle();
+  let campaign;
+  try {
+    campaign = await getBusinessCampaign(business.id, campaignId);
+  } catch {
+    return NextResponse.json(
+      { error: "ক্যাম্পেইনের তথ্য লোড করা যায়নি।" },
+      { status: 500 },
+    );
+  }
 
-  if (campaignError || !campaign) {
+  if (!campaign) {
     return NextResponse.json(
       { error: "ক্যাম্পেইন খুঁজে পাওয়া যায়নি বা আপনার অনুমতি নেই।" },
       { status: 404 },

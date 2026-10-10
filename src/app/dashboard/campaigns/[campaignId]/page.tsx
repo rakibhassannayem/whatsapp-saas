@@ -6,6 +6,12 @@ import PageHeader, { HeaderAction } from "@/components/dashboard/page-header";
 import CampaignAudienceManager from "@/components/dashboard/campaigns/campaign-details/campaign-audience-manager";
 import { getActiveDashboardBusiness, getDashboardBusinesses } from "@/lib/supabase/dashboard-business";
 import type { CampaignAudiencePageProps } from "@/types/campaign";
+import { getBusinessCampaign, getCampaignRecipients } from "@/lib/db/campaign-queries";
+import {
+  getBusinessCustomerTags,
+  getBusinessCustomers,
+  getBusinessTags,
+} from "@/lib/db/customer-queries";
 
 export default async function CampaignAudiencePage({
   params,
@@ -36,99 +42,46 @@ export default async function CampaignAudiencePage({
     redirect("/onboarding");
   }
 
-  const { data: campaign, error: campaignError } = await supabase
-    .from("campaigns")
-    .select("id, name, message_body, status")
-    .eq("id", campaignId)
-    .eq("business_id", business.id)
-    .maybeSingle();
-
-  if (campaignError) {
+  let campaign;
+  try {
+    campaign = await getBusinessCampaign(business.id, campaignId);
+  } catch (error) {
     return (
       <div>
         <PageHeader title="Campaign Audience" subtitle={business.name} />
         <p className="mt-4 rounded-xl bg-red-50 px-4 py-2.5 text-[13px] text-red-600">
-          Could not load campaign: {campaignError.message}
+          Could not load campaign: {error instanceof Error ? error.message : "Database request failed."}
         </p>
       </div>
     );
   }
-
   if (!campaign) {
     notFound();
   }
 
-  const [
-    { data: customers, error: customersError },
-    { data: recipients, error: recipientsError },
-    { data: tags, error: tagsError },
-    { data: customerTags, error: customerTagsError },
-  ] = await Promise.all([
-    supabase
-      .from("customers")
-      .select("id, full_name, phone_e164, email")
-      .eq("business_id", business.id)
-      .order("full_name", { ascending: true }),
-    supabase
-      .from("campaign_recipients")
-      .select("campaign_id, customer_id")
-      .eq("campaign_id", campaign.id),
-    supabase
-      .from("tags")
-      .select("id, name")
-      .eq("business_id", business.id)
-      .order("name", { ascending: true }),
-    supabase
-      .from("customer_tags")
-      .select("customer_id, tag_id")
-      .eq("business_id", business.id),
-  ]);
-
-  if (customersError) {
+  let customers;
+  let recipients;
+  let tags;
+  let customerTags;
+  try {
+    [customers, recipients, tags, customerTags] = await Promise.all([
+      getBusinessCustomers(business.id, true),
+      getCampaignRecipients(campaign.id),
+      getBusinessTags(business.id),
+      getBusinessCustomerTags(business.id),
+    ]);
+  } catch (error) {
     return (
       <div>
         <PageHeader title={campaign.name} subtitle={business.name} />
         <p className="mt-4 rounded-xl bg-red-50 px-4 py-2.5 text-[13px] text-red-600">
-          Could not load customers: {customersError.message}
+          Could not load campaign audience: {error instanceof Error ? error.message : "Database request failed."}
         </p>
       </div>
     );
   }
 
-  if (recipientsError) {
-    return (
-      <div>
-        <PageHeader title={campaign.name} subtitle={business.name} />
-        <p className="mt-4 rounded-xl bg-red-50 px-4 py-2.5 text-[13px] text-red-600">
-          Could not load audience: {recipientsError.message}
-        </p>
-      </div>
-    );
-  }
-
-  if (tagsError) {
-    return (
-      <div>
-        <PageHeader title={campaign.name} subtitle={business.name} />
-        <p className="mt-4 rounded-xl bg-red-50 px-4 py-2.5 text-[13px] text-red-600">
-          Could not load tags: {tagsError.message}
-        </p>
-      </div>
-    );
-  }
-
-  if (customerTagsError) {
-    return (
-      <div>
-        <PageHeader title={campaign.name} subtitle={business.name} />
-        <p className="mt-4 rounded-xl bg-red-50 px-4 py-2.5 text-[13px] text-red-600">
-          Could not load customer tags: {customerTagsError.message}
-        </p>
-      </div>
-    );
-  }
-
-  const audienceCount = recipients?.length ?? 0;
+  const audienceCount = recipients.length;
 
   return (
     <div>
@@ -172,10 +125,10 @@ export default async function CampaignAudiencePage({
 
       <CampaignAudienceManager
         campaignId={campaign.id}
-        initialCustomers={customers ?? []}
-        initialRecipients={recipients ?? []}
-        initialTags={tags ?? []}
-        initialCustomerTags={customerTags ?? []}
+        initialCustomers={customers}
+        initialRecipients={recipients}
+        initialTags={tags}
+        initialCustomerTags={customerTags}
       />
     </div>
   );

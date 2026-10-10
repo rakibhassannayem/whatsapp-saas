@@ -1,4 +1,7 @@
 import { getPlatformAdminServiceContext } from "@/lib/supabase/platform-admin";
+import { count, eq } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { businessMemberships } from "@/lib/db/schema";
 
 const uuidPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -57,20 +60,12 @@ export async function PATCH(request: Request) {
     );
   }
 
-  const [
-    { data: isPlatformAdmin, error: roleError },
-    { count, error: membershipError },
-  ] = await Promise.all([
-    context.serviceClient.rpc("is_platform_admin_user", {
-      target_user_id: userId,
-    }),
-    context.serviceClient
-      .from("business_memberships")
-      .select("business_id", { count: "exact", head: true })
-      .eq("user_id", userId),
+  const [{ data: isPlatformAdmin, error: roleError }, membershipResult] = await Promise.all([
+    context.serviceClient.rpc("is_platform_admin_user", { target_user_id: userId }),
+    db.select({ count: count() }).from(businessMemberships).where(eq(businessMemberships.userId, userId)),
   ]);
 
-  if (roleError || membershipError) {
+  if (roleError || !membershipResult) {
     return Response.json(
       { error: "Could not verify the user account." },
       { status: 500 },
@@ -84,7 +79,7 @@ export async function PATCH(request: Request) {
       { status: 409 },
     );
   }
-  if (!count) {
+  if (!membershipResult[0]?.count) {
     return Response.json(
       { error: "Business user not found." },
       { status: 404 },

@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import PageHeader from "@/components/dashboard/page-header";
 import AddCustomerTabs from "@/components/dashboard/customers/new/add-customer-tabs";
 import { getActiveDashboardBusiness, getDashboardBusinesses } from "@/lib/supabase/dashboard-business";
+import { getBusinessTags } from "@/lib/db/customer-queries";
 
 export default async function NewCustomerPage() {
   const supabase = await createClient();
@@ -30,11 +31,7 @@ export default async function NewCustomerPage() {
     );
   }
 
-  const { data: tags } = await supabase
-    .from("tags")
-    .select("id, name")
-    .eq("business_id", business.id)
-    .order("name", { ascending: true });
+  const tags = await getBusinessTags(business.id);
 
   return (
     <div>
@@ -50,7 +47,7 @@ export default async function NewCustomerPage() {
           subtitle={`${business.name} • Add one manually or import your Excel / CSV file`}
         />
       </div>
-      <AddCustomerTabs tags={tags ?? []} />
+      <AddCustomerTabs tags={tags} />
     </div>
   );
 }

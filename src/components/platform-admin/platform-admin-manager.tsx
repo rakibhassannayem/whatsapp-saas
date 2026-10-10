@@ -202,7 +202,7 @@ export default function PlatformAdminManager({
                   </p>
                 ) : (
                   <p className="mt-1 text-sm text-slate-600">
-                    {subscriptionDataAvailable ? "No subscription records" : "Apply the subscription migration to enable this"}
+                    {subscriptionDataAvailable ? "No subscription records" : "Subscription tables are not in local PostgreSQL yet"}
                   </p>
                 )}
               </div>
@@ -210,7 +210,7 @@ export default function PlatformAdminManager({
                 <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Payment history</p>
                 <p className="mt-1 text-sm text-slate-600">
                   {business.payments.length === 0
-                    ? subscriptionDataAvailable ? "No payment records" : "Migration required"
+                    ? subscriptionDataAvailable ? "No payment records" : "Payment tables are not in local PostgreSQL yet"
                     : `${business.payments.length} records · latest ${business.payments[0].amount.toLocaleString()} ${business.payments[0].currency}`}
                 </p>
               </div>

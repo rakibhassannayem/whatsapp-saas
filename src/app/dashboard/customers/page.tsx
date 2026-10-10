@@ -5,6 +5,11 @@ import { createClient } from "@/lib/supabase/server";
 import PageHeader, { HeaderAction } from "@/components/dashboard/page-header";
 import CustomerList from "@/components/dashboard/customers/customer-list";
 import { getActiveDashboardBusiness, getDashboardBusinesses } from "@/lib/supabase/dashboard-business";
+import {
+  getBusinessCustomerTags,
+  getBusinessCustomers,
+  getBusinessTags,
+} from "@/lib/db/customer-queries";
 
 export default async function CustomersPage() {
   const supabase = await createClient();
@@ -45,51 +50,21 @@ export default async function CustomersPage() {
     );
   }
 
-  const { data: customers, error: customersError } = await supabase
-    .from("customers")
-    .select("id, full_name, phone_e164, email, created_at")
-    .eq("business_id", business.id)
-    .order("created_at", { ascending: false });
-
-  if (customersError) {
+  let customers;
+  let tags;
+  let customerTags;
+  try {
+    [customers, tags, customerTags] = await Promise.all([
+      getBusinessCustomers(business.id),
+      getBusinessTags(business.id),
+      getBusinessCustomerTags(business.id),
+    ]);
+  } catch (error) {
     return (
       <div>
         <PageHeader title="Customers" subtitle={business.name} />
         <p className="mt-4 rounded-xl bg-red-50 px-4 py-2.5 text-[13px] text-red-600">
-          Could not load customers: {customersError.message}
-        </p>
-      </div>
-    );
-  }
-
-  const { data: tags, error: tagsError } = await supabase
-    .from("tags")
-    .select("id, name")
-    .eq("business_id", business.id)
-    .order("name", { ascending: true });
-
-  if (tagsError) {
-    return (
-      <div>
-        <PageHeader title="Customers" subtitle={business.name} />
-        <p className="mt-4 rounded-xl bg-red-50 px-4 py-2.5 text-[13px] text-red-600">
-          Could not load tags: {tagsError.message}
-        </p>
-      </div>
-    );
-  }
-
-  const { data: customerTags, error: customerTagsError } = await supabase
-    .from("customer_tags")
-    .select("customer_id, tag_id")
-    .eq("business_id", business.id);
-
-  if (customerTagsError) {
-    return (
-      <div>
-        <PageHeader title="Customers" subtitle={business.name} />
-        <p className="mt-4 rounded-xl bg-red-50 px-4 py-2.5 text-[13px] text-red-600">
-          Could not load customer tags: {customerTagsError.message}
+          Could not load customer data: {error instanceof Error ? error.message : "Database request failed."}
         </p>
       </div>
     );

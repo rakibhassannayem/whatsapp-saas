@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import PageHeader from "@/components/dashboard/page-header";
 import CustomerImporter from "@/components/dashboard/customers/import/customer-import";
 import { getActiveDashboardBusiness, getDashboardBusinesses } from "@/lib/supabase/dashboard-business";
+import { getBusinessTags } from "@/lib/db/customer-queries";
 
 export default async function ImportCustomersPage() {
   const supabase = await createClient();
@@ -48,11 +49,13 @@ export default async function ImportCustomersPage() {
     );
   }
 
-  const { data: tags, error: tagsError } = await supabase
-    .from("tags")
-    .select("id, name")
-    .eq("business_id", business.id)
-    .order("name", { ascending: true });
+  let tags: Awaited<ReturnType<typeof getBusinessTags>> = [];
+  let tagsError = "";
+  try {
+    tags = await getBusinessTags(business.id);
+  } catch (error) {
+    tagsError = error instanceof Error ? error.message : "Database request failed.";
+  }
 
   return (
     <div>
@@ -79,10 +82,10 @@ export default async function ImportCustomersPage() {
       </div>
       {tagsError && (
         <p className="mb-4 rounded-xl bg-red-50 px-4 py-2.5 text-[13px] text-red-600">
-          Could not load tags: {tagsError.message}
+          Could not load tags: {tagsError}
         </p>
       )}
-      <CustomerImporter initialTags={tags ?? []} />
+      <CustomerImporter initialTags={tags} />
     </div>
   );
 }
