@@ -92,3 +92,63 @@ CREATE TABLE public.message_templates (
   created_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE (business_id, name)
 );
+
+CREATE TABLE public.platform_admins (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL UNIQUE,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE public.subscription_plans (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  billing_period text NOT NULL CHECK (billing_period IN ('monthly', 'yearly')),
+  price_amount numeric(12, 2) CHECK (price_amount IS NULL OR price_amount >= 0),
+  currency text NOT NULL DEFAULT 'BDT',
+  customer_limit integer CHECK (customer_limit IS NULL OR customer_limit >= 0),
+  campaign_limit integer CHECK (campaign_limit IS NULL OR campaign_limit >= 0),
+  monthly_message_limit integer CHECK (monthly_message_limit IS NULL OR monthly_message_limit >= 0),
+  is_active boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT subscription_plans_billing_period_unique UNIQUE (billing_period)
+);
+
+INSERT INTO public.subscription_plans (name, billing_period)
+VALUES ('Monthly', 'monthly'), ('Yearly', 'yearly')
+ON CONFLICT (billing_period) DO NOTHING;
+
+CREATE TABLE public.business_subscriptions (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id uuid NOT NULL REFERENCES public.businesses(id) ON DELETE CASCADE,
+  plan_id uuid NOT NULL REFERENCES public.subscription_plans(id) ON DELETE RESTRICT,
+  status text NOT NULL DEFAULT 'active'
+    CHECK (status IN ('trialing', 'active', 'expired', 'cancelled', 'past_due')),
+  starts_at timestamptz NOT NULL DEFAULT now(),
+  expires_at timestamptz,
+  customer_limit integer CHECK (customer_limit IS NULL OR customer_limit >= 0),
+  campaign_limit integer CHECK (campaign_limit IS NULL OR campaign_limit >= 0),
+  monthly_message_limit integer CHECK (monthly_message_limit IS NULL OR monthly_message_limit >= 0),
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX business_subscriptions_business_created_idx
+  ON public.business_subscriptions (business_id, created_at DESC);
+
+CREATE TABLE public.subscription_payments (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id uuid NOT NULL REFERENCES public.businesses(id) ON DELETE CASCADE,
+  subscription_id uuid REFERENCES public.business_subscriptions(id) ON DELETE SET NULL,
+  package_name text NOT NULL,
+  amount numeric(12, 2) NOT NULL CHECK (amount >= 0),
+  currency text NOT NULL DEFAULT 'BDT',
+  status text NOT NULL DEFAULT 'pending'
+    CHECK (status IN ('pending', 'paid', 'failed', 'refunded')),
+  paid_at timestamptz,
+  payment_reference text,
+  notes text,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX subscription_payments_business_paid_idx
+  ON public.subscription_payments (business_id, paid_at DESC);
+

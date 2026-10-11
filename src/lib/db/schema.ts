@@ -1,7 +1,10 @@
 import {
+  boolean,
   check,
   foreignKey,
   index,
+  integer,
+  numeric,
   pgTable,
   primaryKey,
   text,
@@ -84,8 +87,8 @@ export const customers = pgTable(
       "customers_phone_e164_check",
       sql`${table.phoneE164} ~ '^\\+[1-9][0-9]{1,14}$'`,
     ),
-    unique("customers_business_id_id_unique").on(table.businessId, table.id),
-    unique("customers_business_phone_unique").on(
+    unique("customers_business_id_id_key").on(table.businessId, table.id),
+    unique("customers_business_id_phone_e164_key").on(
       table.businessId,
       table.phoneE164,
     ),
@@ -109,7 +112,7 @@ export const tags = pgTable(
       "tags_name_check",
       sql`char_length(trim(${table.name})) BETWEEN 1 AND 50`,
     ),
-    unique("tags_business_id_id_unique").on(table.businessId, table.id),
+    unique("tags_business_id_id_key").on(table.businessId, table.id),
     uniqueIndex("tags_business_name_unique").on(
       table.businessId,
       sql`lower(${table.name})`,
@@ -175,7 +178,7 @@ export const campaigns = pgTable(
       "campaigns_status_check",
       sql`${table.status} IN ('draft', 'scheduled', 'sending', 'completed', 'failed', 'cancelled')`,
     ),
-    unique("campaigns_business_name_unique").on(table.businessId, table.name),
+    unique("campaigns_business_id_name_key").on(table.businessId, table.name),
   ],
 );
 
@@ -217,9 +220,148 @@ export const messageTemplates = pgTable(
       "message_templates_body_check",
       sql`char_length(trim(${table.body})) > 0`,
     ),
-    unique("message_templates_business_name_unique").on(
+    unique("message_templates_business_id_name_key").on(
       table.businessId,
       table.name,
     ),
   ],
 );
+
+export const platformAdmins = pgTable("platform_admins", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().unique(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export const subscriptionPlans = pgTable(
+  "subscription_plans",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name").notNull(),
+    billingPeriod: text("billing_period")
+      .$type<"monthly" | "yearly">()
+      .notNull(),
+    priceAmount: numeric("price_amount", { precision: 12, scale: 2 }),
+    currency: text("currency").notNull().default("BDT"),
+    customerLimit: integer("customer_limit"),
+    campaignLimit: integer("campaign_limit"),
+    monthlyMessageLimit: integer("monthly_message_limit"),
+    isActive: boolean("is_active").notNull().default(true),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    unique("subscription_plans_billing_period_unique").on(table.billingPeriod),
+    check(
+      "subscription_plans_billing_period_check",
+      sql`${table.billingPeriod} IN ('monthly', 'yearly')`,
+    ),
+    check(
+      "subscription_plans_price_amount_check",
+      sql`${table.priceAmount} IS NULL OR ${table.priceAmount} >= 0`,
+    ),
+    check(
+      "subscription_plans_customer_limit_check",
+      sql`${table.customerLimit} IS NULL OR ${table.customerLimit} >= 0`,
+    ),
+    check(
+      "subscription_plans_campaign_limit_check",
+      sql`${table.campaignLimit} IS NULL OR ${table.campaignLimit} >= 0`,
+    ),
+    check(
+      "subscription_plans_monthly_message_limit_check",
+      sql`${table.monthlyMessageLimit} IS NULL OR ${table.monthlyMessageLimit} >= 0`,
+    ),
+  ],
+);
+
+export const businessSubscriptions = pgTable(
+  "business_subscriptions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    businessId: uuid("business_id")
+      .notNull()
+      .references(() => businesses.id, { onDelete: "cascade" }),
+    planId: uuid("plan_id")
+      .notNull()
+      .references(() => subscriptionPlans.id, { onDelete: "restrict" }),
+    status: text("status")
+      .$type<"trialing" | "active" | "expired" | "cancelled" | "past_due">()
+      .notNull()
+      .default("active"),
+    startsAt: timestamp("starts_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
+    customerLimit: integer("customer_limit"),
+    campaignLimit: integer("campaign_limit"),
+    monthlyMessageLimit: integer("monthly_message_limit"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("business_subscriptions_business_created_idx").on(
+      table.businessId,
+      table.createdAt,
+    ),
+    check(
+      "business_subscriptions_status_check",
+      sql`${table.status} IN ('trialing', 'active', 'expired', 'cancelled', 'past_due')`,
+    ),
+    check(
+      "business_subscriptions_customer_limit_check",
+      sql`${table.customerLimit} IS NULL OR ${table.customerLimit} >= 0`,
+    ),
+    check(
+      "business_subscriptions_campaign_limit_check",
+      sql`${table.campaignLimit} IS NULL OR ${table.campaignLimit} >= 0`,
+    ),
+    check(
+      "business_subscriptions_monthly_message_limit_check",
+      sql`${table.monthlyMessageLimit} IS NULL OR ${table.monthlyMessageLimit} >= 0`,
+    ),
+  ],
+);
+
+export const subscriptionPayments = pgTable(
+  "subscription_payments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    businessId: uuid("business_id")
+      .notNull()
+      .references(() => businesses.id, { onDelete: "cascade" }),
+    subscriptionId: uuid("subscription_id").references(
+      () => businessSubscriptions.id,
+      { onDelete: "set null" },
+    ),
+    packageName: text("package_name").notNull(),
+    amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
+    currency: text("currency").notNull().default("BDT"),
+    status: text("status")
+      .$type<"pending" | "paid" | "failed" | "refunded">()
+      .notNull()
+      .default("pending"),
+    paidAt: timestamp("paid_at", { withTimezone: true }),
+    paymentReference: text("payment_reference"),
+    notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("subscription_payments_business_paid_idx").on(
+      table.businessId,
+      table.paidAt,
+    ),
+    check("subscription_payments_amount_check", sql`${table.amount} >= 0`),
+    check(
+      "subscription_payments_status_check",
+      sql`${table.status} IN ('pending', 'paid', 'failed', 'refunded')`,
+    ),
+  ],
+);
+

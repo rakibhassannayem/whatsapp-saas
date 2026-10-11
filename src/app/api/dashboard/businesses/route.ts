@@ -1,6 +1,12 @@
 import { cookies } from "next/headers";
+import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { businesses, businessMemberships } from "@/lib/db/schema";
+import {
+  businessMemberships,
+  businessSubscriptions,
+  businesses,
+  subscriptionPlans,
+} from "@/lib/db/schema";
 import { createClient } from "@/lib/supabase/server";
 import { ACTIVE_BUSINESS_COOKIE } from "@/lib/supabase/dashboard-business";
 
@@ -47,6 +53,20 @@ export async function POST(request: Request) {
         businessId: createdBusiness.id,
         userId: user.id,
       });
+
+      const [defaultPlan] = await transaction
+        .select({ id: subscriptionPlans.id })
+        .from(subscriptionPlans)
+        .where(eq(subscriptionPlans.billingPeriod, "monthly"))
+        .limit(1);
+
+      if (defaultPlan) {
+        await transaction.insert(businessSubscriptions).values({
+          businessId: createdBusiness.id,
+          planId: defaultPlan.id,
+          status: "active",
+        });
+      }
 
       return createdBusiness;
     });
