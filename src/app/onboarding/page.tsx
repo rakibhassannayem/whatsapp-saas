@@ -1,11 +1,10 @@
 import { redirect } from "next/navigation";
 import OnboardingPage from "@/components/onboarding/onboarding-page";
-import { createClient } from "@/lib/supabase/server";
+import { auth } from "@/auth";
 
 export default async function OnboardingRoute() {
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getUser();
-  if (!data.user) redirect("/login");
+  const session = await auth();
+  if (!session?.user) redirect("/login");
 
   return <OnboardingPage />;
 }

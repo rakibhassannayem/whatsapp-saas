@@ -1,29 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
-import { dashboardApiRequest } from "@/lib/dashboard-api";
+import { signOut } from "next-auth/react";
 import { showToast } from "@/components/ui/toast";
 import type { DashboardUser } from "./app-sidebar";
 
 export default function SidebarUser({ user }: { user: DashboardUser }) {
-  const router = useRouter();
   const [busy, setBusy] = useState(false);
 
   async function handleLogout() {
     setBusy(true);
-    const { error } = await dashboardApiRequest<{ success: boolean }>("/api/dashboard/logout", {
-      method: "POST",
-    });
-    setBusy(false);
-    if (error) {
-      showToast("Could not log out", error, "error");
-      return;
-    }
     showToast("Logged out", "You have been signed out.");
-    router.replace("/login");
-    router.refresh();
+    try {
+      await fetch("/api/dashboard/logout", { method: "POST" });
+    } catch {
+      // ignore
+    }
+    await signOut({ callbackUrl: "/login" });
   }
 
   return (

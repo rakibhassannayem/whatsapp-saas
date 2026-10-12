@@ -3,7 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Lock, LogIn, Mail } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+import { signIn } from "next-auth/react";
 import { showToast } from "@/components/ui/toast";
 
 type LoginFormProps = {
@@ -18,25 +18,31 @@ export default function LoginForm({ submitLabel }: LoginFormProps) {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    const email = String(formData.get("email") ?? "");
+    const email = String(formData.get("email") ?? "").trim();
     const password = String(formData.get("password") ?? "");
 
     setBusy(true);
-    const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
 
-    if (error) {
+    try {
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setBusy(false);
+        showToast("Login failed", "Invalid email or password", "error");
+        return;
+      }
+
+      showToast("Logged in", "Welcome back.");
+      router.replace("/dashboard");
+      router.refresh();
+    } catch {
       setBusy(false);
-      showToast("Login failed", error.message, "error");
-      return;
+      showToast("Login failed", "An unexpected error occurred.", "error");
     }
-
-    showToast("Logged in", "Welcome back.");
-    router.replace("/dashboard");
-    router.refresh();
   }
 
   return (

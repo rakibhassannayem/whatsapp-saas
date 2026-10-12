@@ -3,7 +3,7 @@
 import Link, { type LinkProps } from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type MouseEvent, type ReactNode } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { getSession } from "next-auth/react";
 
 type AuthAwareLinkProps = Omit<LinkProps, "href"> & {
   href: "/login" | "/signup";
@@ -38,10 +38,8 @@ export default function AuthAwareLink({
     setChecking(true);
 
     try {
-      // This only chooses a convenient destination; the dashboard still
-      // verifies the session on the server before showing protected data.
-      const { data } = await createClient().auth.getSession();
-      router.push(data.session?.user ? "/dashboard" : href);
+      const session = await getSession();
+      router.push(session?.user ? "/dashboard" : href);
     } catch {
       router.push(href);
     } finally {

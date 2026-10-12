@@ -1,11 +1,21 @@
-import { createClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
 
 export async function POST() {
-  const supabase = await createClient();
-  const { error } = await supabase.auth.signOut();
+  const cookieStore = await cookies();
+  const cookiesToDelete = [
+    "authjs.session-token",
+    "__Secure-authjs.session-token",
+    "authjs.csrf-token",
+    "authjs.callback-url",
+    "next-auth.session-token",
+    "__Secure-next-auth.session-token",
+    "next-auth.csrf-token",
+    "next-auth.callback-url",
+    "active-business-id",
+  ];
 
-  if (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+  for (const name of cookiesToDelete) {
+    cookieStore.delete(name);
   }
 
   return Response.json({ success: true });

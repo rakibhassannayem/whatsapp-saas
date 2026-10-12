@@ -9,7 +9,7 @@ import {
   FileText,
   Send,
 } from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
+import { auth } from "@/auth";
 import PageHeader, { HeaderAction } from "@/components/dashboard/page-header";
 import WhatsAppTestButton from "./whatsapp-test-button";
 import { getActiveDashboardBusiness, getDashboardBusinesses } from "@/lib/supabase/dashboard-business";
@@ -18,17 +18,15 @@ import { db } from "@/lib/db";
 import { customers, tags } from "@/lib/db/schema";
 
 export default async function DashboardPage() {
-  const supabase = await createClient();
-  const { data, error } = await supabase.auth.getClaims();
+  const session = await auth();
 
-  if (error || !data?.claims) {
+  if (!session?.user) {
     redirect("/login");
   }
 
-  const email =
-    typeof data.claims.email === "string" ? data.claims.email : "Signed-in user";
+  const email = session.user.email ?? "Signed-in user";
 
-  const { data: businesses, error: businessError } = await getDashboardBusinesses(supabase);
+  const { data: businesses, error: businessError } = await getDashboardBusinesses(session.user.id);
   const business = await getActiveDashboardBusiness(businesses ?? []);
 
   if (businessError) {

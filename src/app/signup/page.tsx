@@ -1,13 +1,15 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import AuthAwareLink from "@/components/common/auth-aware-link";
 import { Eye, EyeOff, Lock, Mail, UserRound, UserPlus } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+import { signIn } from "next-auth/react";
 import AuthShell from "@/components/auth/auth-shell";
 import { showToast } from "@/components/ui/toast";
 
 export default function SignupPage() {
+  const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -19,33 +21,47 @@ export default function SignupPage() {
 
     setBusy(true);
 
-    const fullName = String(formData.get("fullName") ?? "");
-    const email = String(formData.get("email") ?? "");
+    const fullName = String(formData.get("fullName") ?? "").trim();
+    const email = String(formData.get("email") ?? "").trim();
     const password = String(formData.get("password") ?? "");
 
-    const supabase = createClient();
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { full_name: fullName },
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
+    try {
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fullName, email, password }),
+      });
 
-    setBusy(false);
+      const data = await response.json().catch(() => null);
 
-    if (error) {
-      showToast("Sign-up failed", error.message, "error");
-      return;
+      if (!response.ok) {
+        setBusy(false);
+        showToast("Sign-up failed", data?.error ?? "Could not create account", "error");
+        return;
+      }
+
+      showToast("Account created", "Logging you in...", "success");
+
+      const loginResult = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+
+      setBusy(false);
+
+      if (loginResult?.error) {
+        showToast("Sign-in required", "Please log in with your new credentials.", "info");
+        router.push("/login");
+        return;
+      }
+
+      router.replace("/onboarding");
+      router.refresh();
+    } catch {
+      setBusy(false);
+      showToast("Sign-up failed", "An error occurred during registration.", "error");
     }
-
-    showToast(
-      "Account created",
-      "Open your email and click the confirmation link, then log in to send your first broadcast.",
-      "success",
-    );
-    form.reset();
   }
 
   return (
@@ -125,7 +141,6 @@ export default function SignupPage() {
           {busy ? "Creating account..." : "Sign up & Start Broadcast"}
         </button>
       </form>
-
     </AuthShell>
   );
 }

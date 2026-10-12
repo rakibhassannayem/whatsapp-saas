@@ -7,17 +7,16 @@ import {
   businesses,
   subscriptionPlans,
 } from "@/lib/db/schema";
-import { createClient } from "@/lib/supabase/server";
+import { auth } from "@/auth";
 import { ACTIVE_BUSINESS_COOKIE } from "@/lib/supabase/dashboard-business";
 
 export async function POST(request: Request) {
-  const supabase = await createClient();
-  const { data: auth, error: authError } = await supabase.auth.getUser();
+  const session = await auth();
 
-  if (authError || !auth.user) {
+  if (!session?.user?.id) {
     return Response.json({ error: "Please sign in first." }, { status: 401 });
   }
-  const user = auth.user;
+  const user = session.user;
 
   let body: unknown;
   try {
@@ -42,7 +41,7 @@ export async function POST(request: Request) {
     const business = await db.transaction(async (transaction) => {
       const [createdBusiness] = await transaction
         .insert(businesses)
-        .values({ name, createdBy: user.id })
+        .values({ name, createdBy: user.id! })
         .returning({ id: businesses.id, name: businesses.name });
 
       if (!createdBusiness) {
@@ -51,7 +50,7 @@ export async function POST(request: Request) {
 
       await transaction.insert(businessMemberships).values({
         businessId: createdBusiness.id,
-        userId: user.id,
+        userId: user.id!,
       });
 
       const [defaultPlan] = await transaction

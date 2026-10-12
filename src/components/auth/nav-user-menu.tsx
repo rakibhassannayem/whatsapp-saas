@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import AuthAwareLink from "@/components/common/auth-aware-link";
 import { useRouter } from "next/navigation";
 import { ChevronDown, LayoutDashboard, LogOut, Megaphone } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
-import { dashboardApiRequest } from "@/lib/dashboard-api";
+import { useSession, signOut } from "next-auth/react";
 import { showToast } from "@/components/ui/toast";
 import {
   DropdownMenu,
@@ -20,12 +19,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { NavUser } from "@/types/auth";
 
-function toNavUser(email: string | undefined, fullName: unknown): NavUser | null {
-  if (!email) return null;
-  const name = typeof fullName === "string" ? fullName.trim() : "";
-  const displayName = name || email.split("@")[0] || email;
+function toNavUser(name: string | null | undefined, email: string | null | undefined): NavUser | null {
+  if (!email && !name) return null;
+  const displayName = name || (email ? email.split("@")[0] : "User");
   return {
-    email,
+    email: email ?? null,
     displayName,
     initial: (displayName.charAt(0) || "U").toUpperCase(),
   };
@@ -33,51 +31,22 @@ function toNavUser(email: string | undefined, fullName: unknown): NavUser | null
 
 export default function NavUserMenu() {
   const router = useRouter();
-  const [status, setStatus] = useState<"loading" | "signed-out" | "signed-in">("loading");
-  const [user, setUser] = useState<NavUser | null>(null);
+  const { data: session, status } = useSession();
   const [loggingOut, setLoggingOut] = useState(false);
 
-  useEffect(() => {
-    const supabase = createClient();
-    let mounted = true;
-
-    supabase.auth.getUser().then(({ data }) => {
-      if (!mounted) return;
-      const u = data.user;
-      const navUser = toNavUser(u?.email, u?.user_metadata?.full_name);
-      setUser(navUser);
-      setStatus(navUser ? "signed-in" : "signed-out");
-    });
-
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!mounted) return;
-      const u = session?.user;
-      const navUser = toNavUser(u?.email, u?.user_metadata?.full_name);
-      setUser(navUser);
-      setStatus(navUser ? "signed-in" : "signed-out");
-    });
-
-    return () => {
-      mounted = false;
-      listener.subscription.unsubscribe();
-    };
-  }, []);
+  const user = session?.user
+    ? toNavUser(session.user.name, session.user.email)
+    : null;
 
   async function handleLogout() {
     setLoggingOut(true);
-    const { error } = await dashboardApiRequest<{ success: boolean }>("/api/dashboard/logout", {
-      method: "POST",
-    });
-    setLoggingOut(false);
-    if (error) {
-      showToast("Could not log out", error, "error");
-      return;
-    }
-    setUser(null);
-    setStatus("signed-out");
     showToast("Logged out", "You have been signed out.");
-    router.replace("/");
-    router.refresh();
+    try {
+      await fetch("/api/dashboard/logout", { method: "POST" });
+    } catch {
+      // ignore
+    }
+    await signOut({ callbackUrl: "/" });
   }
 
   if (status === "loading") {
@@ -89,7 +58,7 @@ export default function NavUserMenu() {
     );
   }
 
-  if (status === "signed-out" || !user) {
+  if (status === "unauthenticated" || !user) {
     return (
       <div className="flex items-center gap-1.5">
         <AuthAwareLink

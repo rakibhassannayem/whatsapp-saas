@@ -1,21 +1,20 @@
-import { createClient } from "@/lib/supabase/server";
+import { auth } from "@/auth";
 import {
   getActiveDashboardBusiness,
   getDashboardBusinesses,
 } from "@/lib/supabase/dashboard-business";
 
 export async function getDashboardContext() {
-  const supabase = await createClient();
-  const { data: auth, error: authError } = await supabase.auth.getUser();
+  const session = await auth();
 
-  if (authError || !auth.user) {
+  if (!session?.user?.id) {
     return {
       response: Response.json({ error: "Unauthorized" }, { status: 401 }),
     } as const;
   }
 
   const { data: businesses, error: businessError } =
-    await getDashboardBusinesses(supabase);
+    await getDashboardBusinesses(session.user.id);
   const business = await getActiveDashboardBusiness(businesses ?? []);
 
   if (businessError) {
@@ -36,7 +35,7 @@ export async function getDashboardContext() {
     } as const;
   }
 
-  return { supabase, business } as const;
+  return { session, user: session.user, business } as const;
 }
 
 export async function readJson<T extends Record<string, unknown>>(

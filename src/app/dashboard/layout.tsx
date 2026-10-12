@@ -1,37 +1,27 @@
-import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { SidebarContent } from "@/components/dashboard/app-sidebar";
 import DashboardMobileNav from "@/components/dashboard/dashboard-mobile-nav";
 import type { DashboardLayoutProps, DashboardUser } from "@/types/dashboard";
 import { getActiveDashboardBusiness, getDashboardBusinesses } from "@/lib/supabase/dashboard-business";
-
-async function getSidebarUser(): Promise<DashboardUser> {
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getUser();
-  const user = data.user;
-  const email = user?.email ?? null;
-  const fullName =
-    user?.user_metadata && typeof user.user_metadata.full_name === "string"
-      ? user.user_metadata.full_name.trim()
-      : "";
-  const displayName =
-    fullName || (email ? email.split("@")[0] : null) || "Signed-in user";
-  return {
-    displayName,
-    email,
-    initial: (displayName.charAt(0) || "U").toUpperCase(),
-  };
-}
+import { auth } from "@/auth";
 
 export default async function DashboardLayout({
   children,
 }: DashboardLayoutProps) {
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getUser();
-  if (!data.user) redirect("/login");
+  const session = await auth();
+  if (!session?.user) redirect("/login");
 
-  const user = await getSidebarUser();
-  const { data: businesses } = await getDashboardBusinesses(supabase);
+  const email = session.user.email ?? null;
+  const name = session.user.name ?? "";
+  const displayName = name || (email ? email.split("@")[0] : null) || "Signed-in user";
+
+  const user: DashboardUser = {
+    displayName,
+    email,
+    initial: (displayName.charAt(0) || "U").toUpperCase(),
+  };
+
+  const { data: businesses } = await getDashboardBusinesses(session.user.id);
   const availableBusinesses = businesses ?? [];
   const activeBusiness = await getActiveDashboardBusiness(availableBusinesses);
 

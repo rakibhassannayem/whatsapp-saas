@@ -1,24 +1,36 @@
 import { cookies } from "next/headers";
 import { asc, eq } from "drizzle-orm";
-import type { createClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
 import { businesses, businessMemberships } from "@/lib/db/schema";
+import { auth } from "@/auth";
 
 const ACTIVE_BUSINESS_COOKIE = "active-business-id";
 
-type DashboardSupabase = Awaited<ReturnType<typeof createClient>>;
 export type DashboardBusiness = {
   id: string;
   name: string;
   created_at: string;
 };
 
-export async function getDashboardBusinesses(supabase: DashboardSupabase) {
-  const { data: auth, error: authError } = await supabase.auth.getUser();
-  if (authError || !auth.user) {
+export async function getDashboardBusinesses(param?: unknown) {
+  let userId: string | undefined;
+
+  if (typeof param === "string") {
+    userId = param;
+  } else if (param && typeof (param as { auth?: { getUser?: () => Promise<{ data?: { user?: { id?: string } } }> } }).auth?.getUser === "function") {
+    const { data } = await (param as { auth: { getUser: () => Promise<{ data?: { user?: { id?: string } } }> } }).auth.getUser();
+    userId = data?.user?.id;
+  }
+
+  if (!userId) {
+    const session = await auth();
+    userId = session?.user?.id;
+  }
+
+  if (!userId) {
     return {
       data: null,
-      error: { message: authError?.message ?? "Not signed in." },
+      error: { message: "Not signed in." },
     };
   }
 
@@ -34,7 +46,7 @@ export async function getDashboardBusinesses(supabase: DashboardSupabase) {
         businessMemberships,
         eq(businessMemberships.businessId, businesses.id),
       )
-      .where(eq(businessMemberships.userId, auth.user.id))
+      .where(eq(businessMemberships.userId, userId))
       .orderBy(asc(businesses.createdAt));
 
     return {
