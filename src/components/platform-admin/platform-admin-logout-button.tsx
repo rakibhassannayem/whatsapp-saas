@@ -1,23 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
 
 export default function PlatformAdminLogoutButton() {
-  const router = useRouter();
   const [busy, setBusy] = useState(false);
 
   async function logout() {
     setBusy(true);
-    const response = await fetch("/api/admin/logout", { method: "POST" });
-    if (!response.ok) {
-      setBusy(false);
-      return;
+    try {
+      await fetch("/api/admin/logout", { method: "POST" });
+    } catch {
+      // ignore
     }
-    router.replace("/admin");
-    router.refresh();
+    window.location.href = "/admin";
   }
+
 
   return (
     <button

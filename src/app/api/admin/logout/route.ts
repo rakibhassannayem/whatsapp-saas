@@ -1,12 +1,9 @@
-import { createAdminServerClient } from "@/lib/supabase/admin-server";
+import { cookies } from "next/headers";
+import { ADMIN_AUTH_COOKIE_NAME } from "@/lib/supabase/admin-session";
 
 export async function POST() {
-  const supabase = await createAdminServerClient();
-  const { error } = await supabase.auth.signOut();
-
-  if (error) {
-    return Response.json({ error: "Could not log out of the admin console." }, { status: 500 });
-  }
-
+  const cookieStore = await cookies();
+  cookieStore.delete(ADMIN_AUTH_COOKIE_NAME);
   return Response.json({ success: true });
 }
+

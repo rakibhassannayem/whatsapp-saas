@@ -10,7 +10,10 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "drizzle-kit migrate",
+    "admin:create": "node scripts/create-admin.mjs",
+    "admin:list": "node scripts/create-admin.mjs --list",
+    "admin:promote": "node scripts/create-admin.mjs --promote"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

@@ -8,9 +8,9 @@ import {
   EyeOff,
   KeyRound,
   LockKeyhole,
+  LogOut,
   ShieldCheck,
 } from "lucide-react";
-import { createAdminClient } from "@/lib/supabase/admin-client";
 
 type PlatformAdminAccessScreenProps = {
   mode: "login" | "denied" | "unavailable";
@@ -23,6 +23,8 @@ export default function PlatformAdminAccessScreen({
   const [busy, setBusy] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  // When denied, user can switch to admin login form inline
+  const [showSwitchForm, setShowSwitchForm] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -30,44 +32,63 @@ export default function PlatformAdminAccessScreen({
     setBusy(true);
 
     const formData = new FormData(event.currentTarget);
-    const email = String(formData.get("email") ?? "");
+    const email = String(formData.get("email") ?? "").trim();
     const password = String(formData.get("password") ?? "");
-    const supabase = createAdminClient();
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
 
-    if (error) {
-      setErrorMessage("The email or password is incorrect. Please try again.");
+    try {
+      const response = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        setErrorMessage(
+          data.error || "The email or password is incorrect. Please try again."
+        );
+        setBusy(false);
+        return;
+      }
+
+      router.replace("/admin");
+      router.refresh();
+    } catch {
+      setErrorMessage("An unexpected network error occurred. Please try again.");
       setBusy(false);
-      return;
     }
-
-    const { data: isPlatformAdmin, error: roleError } =
-      await supabase.rpc("is_platform_admin");
-
-    if (roleError || isPlatformAdmin !== true) {
-      await supabase.auth.signOut();
-      setErrorMessage(
-        roleError
-          ? "Admin access could not be verified. Please try again shortly."
-          : "This account is not on the platform admin allowlist.",
-      );
-      setBusy(false);
-      return;
-    }
-
-    router.replace("/admin");
-    router.refresh();
   }
 
-  const title =
-    mode === "login"
+  async function handleSwitchAccount() {
+    setBusy(true);
+    try {
+      await fetch("/api/admin/logout", { method: "POST" });
+    } catch {
+      // ignore
+    }
+    setBusy(false);
+    setShowSwitchForm(true);
+  }
+
+
+  const showLoginForm = mode === "login" || showSwitchForm;
+
+  const title = showSwitchForm
+    ? "Sign in as platform admin"
+    : mode === "login"
       ? "Platform Admin sign in"
       : mode === "denied"
         ? "Admin access denied"
         : "Could not verify admin access";
+
+  const subtitle = showSwitchForm
+    ? "Enter your admin account credentials below."
+    : mode === "login"
+      ? "Sign in with an authorized platform admin account."
+      : mode === "denied"
+        ? "Your current account does not have platform admin privileges."
+        : "Could not verify admin access. Check your database connection and try again.";
 
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#07120f] px-5 py-12 text-white">
@@ -91,15 +112,9 @@ export default function PlatformAdminAccessScreen({
         </div>
 
         <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
-        <p className="mt-2 text-sm leading-6 text-slate-400">
-          {mode === "login"
-            ? "Sign in with an authorized platform admin account."
-            : mode === "denied"
-              ? "This account is not on the private admin allowlist. Use an authorized account to continue."
-              : "Supabase could not verify admin access. Check the configuration and try again."}
-        </p>
+        <p className="mt-2 text-sm leading-6 text-slate-400">{subtitle}</p>
 
-        {mode === "login" && (
+        {showLoginForm && (
           <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
             <label className="block">
               <span className="mb-2 block text-sm font-medium text-slate-200">
@@ -132,9 +147,7 @@ export default function PlatformAdminAccessScreen({
                   className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-slate-500 hover:text-slate-200"
                   type="button"
                   onClick={() => setShowPassword((shown) => !shown)}
-                  aria-label={
-                    showPassword ? "Hide password" : "Show password"
-                  }
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? (
                     <EyeOff className="size-4" />
@@ -161,11 +174,25 @@ export default function PlatformAdminAccessScreen({
           </form>
         )}
 
-        {mode !== "login" && (
-          <div className="mt-7 rounded-xl border border-white/10 bg-black/10 p-4 text-sm leading-6 text-slate-400">
-            Admin access is verified server-side against the Supabase allowlist.
+        {mode !== "login" && !showSwitchForm && (
+          <div className="mt-7 space-y-4">
+            <div className="rounded-xl border border-white/10 bg-black/10 p-4 text-sm leading-6 text-slate-400">
+              Admin access is verified server-side. Only accounts with the{" "}
+              <span className="font-semibold text-emerald-400">admin</span> role
+              have access to this console.
+            </div>
+            <button
+              type="button"
+              onClick={handleSwitchAccount}
+              disabled={busy}
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/5 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+            >
+              <LogOut className="size-4" />
+              {busy ? "Signing out…" : "Sign out & sign in as admin"}
+            </button>
           </div>
         )}
+
         <div className="mt-8 border-t border-white/10 pt-5 text-xs text-slate-500">
           Restricted area · Access is checked for every admin session
         </div>

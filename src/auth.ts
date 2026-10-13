@@ -41,6 +41,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             id: user.id,
             name: user.name,
             email: user.email,
+            role: user.role,
           };
         } catch (error) {
           console.error("Auth authorize error:", error);
@@ -56,12 +57,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+        token.role = (user as { role?: string }).role;
       }
       return token;
     },
     session({ session, token }) {
       if (session.user && token?.id) {
         session.user.id = token.id as string;
+        (session.user as { role?: string }).role =
+          (token.role as string) || "user";
       }
       return session;
     },

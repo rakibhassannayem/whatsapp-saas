@@ -1,7 +1,7 @@
 import { getPlatformAdminServiceContext } from "@/lib/supabase/platform-admin";
-import { count, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { businessMemberships } from "@/lib/db/schema";
+import { users } from "@/lib/db/schema";
 
 const uuidPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -60,43 +60,25 @@ export async function PATCH(request: Request) {
     );
   }
 
-  const [{ data: isPlatformAdmin, error: roleError }, membershipResult] = await Promise.all([
-    context.serviceClient.rpc("is_platform_admin_user", { target_user_id: userId }),
-    db.select({ count: count() }).from(businessMemberships).where(eq(businessMemberships.userId, userId)),
-  ]);
+  const [targetUser] = await db
+    .select({ id: users.id, role: users.role })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
 
-  if (roleError || !membershipResult) {
-    return Response.json(
-      { error: "Could not verify the user account." },
-      { status: 500 },
-    );
-  }
-  if (isPlatformAdmin) {
-    return Response.json(
-      {
-        error: "Platform admin accounts cannot be suspended from this dashboard.",
-      },
-      { status: 409 },
-    );
-  }
-  if (!membershipResult[0]?.count) {
+  if (!targetUser) {
     return Response.json(
       { error: "Business user not found." },
       { status: 404 },
     );
   }
 
-  const { error } = await context.serviceClient.auth.admin.updateUserById(
-    userId,
-    {
-      ban_duration: action === "suspend" ? "876000h" : "none",
-    },
-  );
-
-  if (error) {
+  if (targetUser.role === "admin") {
     return Response.json(
-      { error: "Could not update the user account status." },
-      { status: 500 },
+      {
+        error: "Platform admin accounts cannot be suspended from this dashboard.",
+      },
+      { status: 409 },
     );
   }
 

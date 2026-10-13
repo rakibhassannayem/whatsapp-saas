@@ -12,6 +12,7 @@ import {
   profiles,
   subscriptionPayments,
   subscriptionPlans,
+  users,
 } from "@/lib/db/schema";
 import { getPlatformAdminServiceContext } from "@/lib/supabase/platform-admin";
 import type { PlatformAdminAccount, PlatformAdminBusiness } from "@/types/platform-admin";
@@ -20,29 +21,29 @@ export async function getPlatformAdminAccounts() {
   const context = await getPlatformAdminServiceContext();
   if (context.status !== "authorized") return context;
 
-  const { data: adminRows, error } = await context.serviceClient.rpc("list_platform_admins");
-  if (error) return { status: "data-unavailable" as const };
+  try {
+    const adminRows = await db
+      .select({
+        id: users.id,
+        email: users.email,
+        createdAt: users.createdAt,
+      })
+      .from(users)
+      .where(eq(users.role, "admin"));
 
-  const rows = (adminRows ?? []) as { user_id: string; created_at: string; activated_at: string | null }[];
-  const accounts = await Promise.all(rows.map(async (row) => {
-    const { data, error: userError } = await context.serviceClient.auth.admin.getUserById(row.user_id);
-    if (userError || !data.user) return null;
-    const bannedUntil = data.user.banned_until ? Date.parse(data.user.banned_until) : Number.NaN;
-    const isSuspended = Number.isFinite(bannedUntil) && bannedUntil > Date.now();
     return {
-      id: data.user.id,
-      email: data.user.email ?? null,
-      createdAt: row.created_at,
-      status: isSuspended ? ("suspended" as const) : row.activated_at ? ("active" as const) : ("invitation pending" as const),
+      status: "authorized" as const,
+      currentUserId: context.user.id,
+      accounts: adminRows.map((row) => ({
+        id: row.id,
+        email: row.email,
+        createdAt: row.createdAt.toISOString(),
+        status: "active" as const,
+      })),
     };
-  }));
-
-  if (accounts.some((account) => account === null)) return { status: "auth-data-unavailable" as const };
-  return {
-    status: "authorized" as const,
-    currentUserId: context.user.id,
-    accounts: accounts.filter((account): account is PlatformAdminAccount => account !== null),
-  };
+  } catch {
+    return { status: "data-unavailable" as const };
+  }
 }
 
 export async function getPlatformAdminBusinesses() {
@@ -140,6 +141,7 @@ export async function getPlatformAdminBusinesses() {
       ...memberships.map((row) => row.userId),
       ...businessRows.map((row) => row.createdBy),
     ])];
+
     const profilesById = new Map<string, string | null>();
     if (userIds.length) {
       const profileRows = await db.select({ id: profiles.id, fullName: profiles.fullName })
@@ -147,32 +149,24 @@ export async function getPlatformAdminBusinesses() {
       for (const profile of profileRows) profilesById.set(profile.id, profile.fullName);
     }
 
-    const userResults = await Promise.all(userIds.map(async (userId) => {
-      const [authResult, adminResult] = await Promise.all([
-        context.serviceClient.auth.admin.getUserById(userId),
-        context.serviceClient.rpc("is_platform_admin_user", { target_user_id: userId }),
-      ]);
-      if (authResult.error || !authResult.data.user) return { userId, error: "auth" as const };
-      if (adminResult.error) return { userId, error: "role-check" as const };
-      const user = authResult.data.user;
-      const bannedUntil = user.banned_until ? Date.parse(user.banned_until) : Number.NaN;
-      return {
-        userId,
-        error: null,
-        email: user.email ?? null,
-        status: Number.isFinite(bannedUntil) && bannedUntil > Date.now() ? ("suspended" as const) : ("active" as const),
-        role: adminResult.data ? ("platform_admin" as const) : ("business_user" as const),
-      };
-    }));
-
-    const failedUserLookup = userResults.find((row) => row.error !== null);
-    if (failedUserLookup?.error === "role-check") return { status: "role-check-unavailable" as const };
-    if (failedUserLookup) return { status: "auth-data-unavailable" as const };
+    const userRows = userIds.length
+      ? await db
+          .select({
+            id: users.id,
+            email: users.email,
+            role: users.role,
+          })
+          .from(users)
+          .where(inArray(users.id, userIds))
+      : [];
 
     const usersById = new Map<string, { email: string | null; status: "active" | "suspended"; role: "platform_admin" | "business_user" }>();
-    for (const row of userResults) {
-      if (row.error) continue;
-      usersById.set(row.userId, { email: row.email, status: row.status, role: row.role });
+    for (const row of userRows) {
+      usersById.set(row.id, {
+        email: row.email,
+        status: "active",
+        role: row.role === "admin" ? "platform_admin" : "business_user",
+      });
     }
 
     const membershipsByBusiness = new Map<string, Set<string>>();
