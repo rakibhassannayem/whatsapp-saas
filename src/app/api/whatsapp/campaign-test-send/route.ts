@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getDashboardContext, readJson } from "@/lib/supabase/dashboard-api";
+import { getDashboardContext, readJson } from "@/lib/dashboard-route";
 import { getBusinessCampaign } from "@/lib/db/campaign-queries";
 
 type TestSendRequestBody = Record<string, unknown> & {

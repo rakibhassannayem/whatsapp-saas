@@ -3,7 +3,7 @@ import {
   databaseErrorResponse,
   getDashboardContext,
   readJson,
-} from "@/lib/supabase/dashboard-api";
+} from "@/lib/dashboard-route";
 import { db } from "@/lib/db";
 import { messageTemplates } from "@/lib/db/schema";
 

@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { SidebarContent } from "@/components/dashboard/app-sidebar";
 import DashboardMobileNav from "@/components/dashboard/dashboard-mobile-nav";
 import type { DashboardLayoutProps, DashboardUser } from "@/types/dashboard";
-import { getActiveDashboardBusiness, getDashboardBusinesses } from "@/lib/supabase/dashboard-business";
+import { getActiveDashboardBusiness, getDashboardBusinesses } from "@/lib/dashboard-business";
 import { auth } from "@/auth";
 
 export default async function DashboardLayout({

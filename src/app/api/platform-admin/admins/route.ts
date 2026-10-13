@@ -1,4 +1,4 @@
-import { getPlatformAdminServiceContext } from "@/lib/supabase/platform-admin";
+import { getPlatformAdminServiceContext } from "@/lib/platform-admin";
 import { count, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";

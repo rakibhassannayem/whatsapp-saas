@@ -1,20 +1,19 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { auth } from "@/auth";
 import PageHeader from "@/components/dashboard/page-header";
 import AddCustomerTabs from "@/components/dashboard/customers/new/add-customer-tabs";
-import { getActiveDashboardBusiness, getDashboardBusinesses } from "@/lib/supabase/dashboard-business";
+import { getActiveDashboardBusiness, getDashboardBusinesses } from "@/lib/dashboard-business";
 import { getBusinessTags } from "@/lib/db/customer-queries";
 
 export default async function NewCustomerPage() {
-  const supabase = await createClient();
-  const { data: auth, error: authError } = await supabase.auth.getClaims();
+  const session = await auth();
 
-  if (authError || !auth?.claims) {
+  if (!session?.user?.id) {
     redirect("/login");
   }
 
-  const { data: businesses } = await getDashboardBusinesses(supabase);
+  const { data: businesses } = await getDashboardBusinesses(session.user.id);
   const business = await getActiveDashboardBusiness(businesses ?? []);
 
   if (!business) {

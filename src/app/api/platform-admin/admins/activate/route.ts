@@ -1,4 +1,4 @@
-import { getPlatformAdminServiceContext } from "@/lib/supabase/platform-admin";
+import { getPlatformAdminServiceContext } from "@/lib/platform-admin";
 
 export async function POST() {
   const context = await getPlatformAdminServiceContext();

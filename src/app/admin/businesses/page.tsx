@@ -2,7 +2,7 @@ import PlatformAdminDataNotice from "@/components/platform-admin/platform-admin-
 import PlatformAdminOwnerList, {
   type PlatformAdminOwnerSummary,
 } from "@/components/platform-admin/platform-admin-owner-list";
-import { getPlatformAdminBusinesses } from "@/lib/supabase/platform-admin-data";
+import { getPlatformAdminBusinesses } from "@/lib/platform-admin-data";
 
 export default async function AdminBusinessesPage() {
   const result = await getPlatformAdminBusinesses();

@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
-import { ADMIN_AUTH_COOKIE_NAME, signAdminToken } from "@/lib/supabase/admin-session";
+import { ADMIN_AUTH_COOKIE_NAME, signAdminToken } from "@/lib/admin-session";
 
 export async function POST(request: Request) {
   try {

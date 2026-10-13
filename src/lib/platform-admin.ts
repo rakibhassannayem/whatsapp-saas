@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
-import { ADMIN_AUTH_COOKIE_NAME, verifyAdminToken } from "@/lib/supabase/admin-session";
+import { ADMIN_AUTH_COOKIE_NAME, verifyAdminToken } from "@/lib/admin-session";
 
 export type PlatformAdminContext =
   | { status: "unauthenticated" }

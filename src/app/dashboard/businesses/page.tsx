@@ -3,18 +3,17 @@ import { redirect } from "next/navigation";
 import { Plus } from "lucide-react";
 import PageHeader from "@/components/dashboard/page-header";
 import BusinessesManager from "@/components/dashboard/businesses/businesses-manager";
-import { createClient } from "@/lib/supabase/server";
+import { auth } from "@/auth";
 import {
   getActiveDashboardBusiness,
   getDashboardBusinesses,
-} from "@/lib/supabase/dashboard-business";
+} from "@/lib/dashboard-business";
 
 export default async function BusinessesPage() {
-  const supabase = await createClient();
-  const { data: auth, error: authError } = await supabase.auth.getClaims();
-  if (authError || !auth?.claims) redirect("/login");
+  const session = await auth();
+  if (!session?.user?.id) redirect("/login");
 
-  const { data: businesses, error } = await getDashboardBusinesses(supabase);
+  const { data: businesses, error } = await getDashboardBusinesses(session.user.id);
   if (error) {
     return (
       <div>

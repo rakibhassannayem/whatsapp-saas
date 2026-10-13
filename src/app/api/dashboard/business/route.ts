@@ -1,11 +1,11 @@
-import { createClient } from "@/lib/supabase/server";
+import { auth } from "@/auth";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { businesses } from "@/lib/db/schema";
 import {
   ACTIVE_BUSINESS_COOKIE,
   getDashboardBusinesses,
-} from "@/lib/supabase/dashboard-business";
+} from "@/lib/dashboard-business";
 import { cookies } from "next/headers";
 
 type BusinessBody = { businessId?: unknown; name?: unknown };
@@ -22,12 +22,11 @@ async function readBody(request: Request): Promise<BusinessBody | null> {
 }
 
 async function requireSignedInUser() {
-  const supabase = await createClient();
-  const { data: auth, error } = await supabase.auth.getUser();
-  if (error || !auth.user) {
+  const session = await auth();
+  if (!session?.user?.id) {
     return { response: Response.json({ error: "Unauthorized" }, { status: 401 }) } as const;
   }
-  return { supabase, user: auth.user } as const;
+  return { user: { id: session.user.id, email: session.user.email ?? "" } } as const;
 }
 
 export async function POST(request: Request) {
@@ -42,7 +41,7 @@ export async function POST(request: Request) {
   }
 
   const { data: availableBusinesses, error } = await getDashboardBusinesses(
-    context.supabase,
+    context.user.id,
   );
   if (error) {
     return Response.json({ error: error.message }, { status: 500 });
@@ -130,7 +129,7 @@ export async function DELETE(request: Request) {
   }
 
   const { data: accessibleBusinesses, error: listError } =
-    await getDashboardBusinesses(context.supabase);
+    await getDashboardBusinesses(context.user.id);
   if (listError) {
     return Response.json({ error: listError.message }, { status: 500 });
   }

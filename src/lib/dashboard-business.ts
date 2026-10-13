@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { businesses, businessMemberships } from "@/lib/db/schema";
 import { auth } from "@/auth";
 
-const ACTIVE_BUSINESS_COOKIE = "active-business-id";
+export const ACTIVE_BUSINESS_COOKIE = "active-business-id";
 
 export type DashboardBusiness = {
   id: string;
@@ -12,14 +12,11 @@ export type DashboardBusiness = {
   created_at: string;
 };
 
-export async function getDashboardBusinesses(param?: unknown) {
+export async function getDashboardBusinesses(userIdOrParam?: unknown) {
   let userId: string | undefined;
 
-  if (typeof param === "string") {
-    userId = param;
-  } else if (param && typeof (param as { auth?: { getUser?: () => Promise<{ data?: { user?: { id?: string } } }> } }).auth?.getUser === "function") {
-    const { data } = await (param as { auth: { getUser: () => Promise<{ data?: { user?: { id?: string } } }> } }).auth.getUser();
-    userId = data?.user?.id;
+  if (typeof userIdOrParam === "string") {
+    userId = userIdOrParam;
   }
 
   if (!userId) {
@@ -69,15 +66,13 @@ export async function getDashboardBusinesses(param?: unknown) {
 }
 
 export async function getActiveDashboardBusiness(
-  businesses: DashboardBusiness[],
-) {
-  const cookieStore = await cookies();
-  const selectedId = cookieStore.get(ACTIVE_BUSINESS_COOKIE)?.value;
-  return (
-    businesses.find((business) => business.id === selectedId) ??
-    businesses[0] ??
-    null
-  );
-}
+  availableBusinesses: DashboardBusiness[],
+): Promise<DashboardBusiness | null> {
+  if (availableBusinesses.length === 0) return null;
 
-export { ACTIVE_BUSINESS_COOKIE };
+  const cookieStore = await cookies();
+  const activeId = cookieStore.get(ACTIVE_BUSINESS_COOKIE)?.value;
+  const matched = availableBusinesses.find((b) => b.id === activeId);
+
+  return matched ?? availableBusinesses[0];
+}

@@ -1,6 +1,6 @@
 import { Activity, Megaphone } from "lucide-react";
 import PlatformAdminDataNotice from "@/components/platform-admin/platform-admin-data-notice";
-import { getPlatformAdminBusinesses } from "@/lib/supabase/platform-admin-data";
+import { getPlatformAdminBusinesses } from "@/lib/platform-admin-data";
 
 export default async function AdminCampaignsPage() {
   const result = await getPlatformAdminBusinesses();

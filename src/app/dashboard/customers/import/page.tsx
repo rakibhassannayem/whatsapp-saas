@@ -1,21 +1,20 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { UserPlus } from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
+import { auth } from "@/auth";
 import PageHeader from "@/components/dashboard/page-header";
 import CustomerImporter from "@/components/dashboard/customers/import/customer-import";
-import { getActiveDashboardBusiness, getDashboardBusinesses } from "@/lib/supabase/dashboard-business";
+import { getActiveDashboardBusiness, getDashboardBusinesses } from "@/lib/dashboard-business";
 import { getBusinessTags } from "@/lib/db/customer-queries";
 
 export default async function ImportCustomersPage() {
-  const supabase = await createClient();
-  const { data: auth, error: authError } = await supabase.auth.getClaims();
+  const session = await auth();
 
-  if (authError || !auth?.claims) {
+  if (!session?.user?.id) {
     redirect("/login");
   }
 
-  const { data: businesses, error } = await getDashboardBusinesses(supabase);
+  const { data: businesses, error } = await getDashboardBusinesses(session.user.id);
   const business = await getActiveDashboardBusiness(businesses ?? []);
 
   if (error) {

@@ -1,6 +1,6 @@
 import PlatformAdminAdminsManager from "@/components/platform-admin/platform-admin-admins-manager";
 import PlatformAdminDataNotice from "@/components/platform-admin/platform-admin-data-notice";
-import { getPlatformAdminAccounts } from "@/lib/supabase/platform-admin-data";
+import { getPlatformAdminAccounts } from "@/lib/platform-admin-data";
 
 export default async function PlatformAdminsPage() {
   const result = await getPlatformAdminAccounts();

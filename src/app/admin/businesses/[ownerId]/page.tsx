@@ -3,7 +3,7 @@ import { ArrowLeft, Building2 } from "lucide-react";
 import PlatformAdminDataNotice from "@/components/platform-admin/platform-admin-data-notice";
 import PlatformAdminManager from "@/components/platform-admin/platform-admin-manager";
 import PlatformAdminRemoveOwner from "@/components/platform-admin/platform-admin-remove-owner";
-import { getPlatformAdminBusinesses } from "@/lib/supabase/platform-admin-data";
+import { getPlatformAdminBusinesses } from "@/lib/platform-admin-data";
 
 export default async function AdminBusinessOwnerPage({
   params,

@@ -1,6 +1,6 @@
 import PlatformAdminAccessScreen from "@/components/platform-admin/platform-admin-access-screen";
 import PlatformAdminShell from "@/components/platform-admin/platform-admin-shell";
-import { getPlatformAdminContext } from "@/lib/supabase/platform-admin";
+import { getPlatformAdminContext } from "@/lib/platform-admin";
 
 export default async function PlatformAdminLayout({
   children,

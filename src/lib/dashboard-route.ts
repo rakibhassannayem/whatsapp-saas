@@ -1,8 +1,9 @@
+import "server-only";
 import { auth } from "@/auth";
 import {
   getActiveDashboardBusiness,
   getDashboardBusinesses,
-} from "@/lib/supabase/dashboard-business";
+} from "@/lib/dashboard-business";
 
 export async function getDashboardContext() {
   const session = await auth();

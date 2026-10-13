@@ -1,10 +1,10 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { auth } from "@/auth";
 import PageHeader from "@/components/dashboard/page-header";
 import SendMessageManager from "@/components/dashboard/send-message/send-message-manager";
 import Link from "next/link";
 import { Plus } from "lucide-react";
-import { getActiveDashboardBusiness, getDashboardBusinesses } from "@/lib/supabase/dashboard-business";
+import { getActiveDashboardBusiness, getDashboardBusinesses } from "@/lib/dashboard-business";
 import {
   getBusinessCampaignRecipients,
   getBusinessCampaigns,
@@ -16,14 +16,13 @@ import {
 } from "@/lib/db/customer-queries";
 
 export default async function SendMessagePage() {
-  const supabase = await createClient();
-  const { data: auth, error: authError } = await supabase.auth.getClaims();
+  const session = await auth();
 
-  if (authError || !auth?.claims) {
+  if (!session?.user?.id) {
     redirect("/login");
   }
 
-  const { data: businesses, error: businessError } = await getDashboardBusinesses(supabase);
+  const { data: businesses, error: businessError } = await getDashboardBusinesses(session.user.id);
   const business = await getActiveDashboardBusiness(businesses ?? []);
 
   if (businessError) {

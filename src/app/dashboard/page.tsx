@@ -12,7 +12,7 @@ import {
 import { auth } from "@/auth";
 import PageHeader, { HeaderAction } from "@/components/dashboard/page-header";
 import WhatsAppTestButton from "./whatsapp-test-button";
-import { getActiveDashboardBusiness, getDashboardBusinesses } from "@/lib/supabase/dashboard-business";
+import { getActiveDashboardBusiness, getDashboardBusinesses } from "@/lib/dashboard-business";
 import { count, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { customers, tags } from "@/lib/db/schema";

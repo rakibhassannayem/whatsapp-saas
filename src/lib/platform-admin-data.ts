@@ -14,7 +14,7 @@ import {
   subscriptionPlans,
   users,
 } from "@/lib/db/schema";
-import { getPlatformAdminServiceContext } from "@/lib/supabase/platform-admin";
+import { getPlatformAdminServiceContext } from "@/lib/platform-admin";
 import type { PlatformAdminAccount, PlatformAdminBusiness } from "@/types/platform-admin";
 
 export async function getPlatformAdminAccounts() {

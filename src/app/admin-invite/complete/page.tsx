@@ -1,5 +1,5 @@
-import PlatformAdminInvitationComplete from "@/components/platform-admin/platform-admin-invitation-complete";
+import { redirect } from "next/navigation";
 
 export default function PlatformAdminInvitationCompletePage() {
-  return <PlatformAdminInvitationComplete />;
+  redirect("/admin");
 }

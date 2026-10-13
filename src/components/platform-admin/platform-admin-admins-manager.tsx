@@ -92,7 +92,7 @@ export default function PlatformAdminAdminsManager({
           <div>
             <h2 className="text-base font-semibold text-slate-950">Add a platform admin</h2>
             <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-500">
-              Enter their email. If an account already exists, it will be promoted. Otherwise, Supabase will create an invited account and email them a secure setup link. Public signup is not needed.
+              Enter their email. If an account already exists, it will be promoted to platform admin.
             </p>
           </div>
         </div>

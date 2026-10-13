@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, Users } from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
+import { auth } from "@/auth";
 import PageHeader, { HeaderAction } from "@/components/dashboard/page-header";
 import CampaignAudienceManager from "@/components/dashboard/campaigns/campaign-details/campaign-audience-manager";
-import { getActiveDashboardBusiness, getDashboardBusinesses } from "@/lib/supabase/dashboard-business";
+import { getActiveDashboardBusiness, getDashboardBusinesses } from "@/lib/dashboard-business";
 import type { CampaignAudiencePageProps } from "@/types/campaign";
 import { getBusinessCampaign, getCampaignRecipients } from "@/lib/db/campaign-queries";
 import {
@@ -17,14 +17,13 @@ export default async function CampaignAudiencePage({
   params,
 }: CampaignAudiencePageProps) {
   const { campaignId } = await params;
-  const supabase = await createClient();
-  const { data: auth, error: authError } = await supabase.auth.getClaims();
+  const session = await auth();
 
-  if (authError || !auth?.claims) {
+  if (!session?.user?.id) {
     redirect("/login");
   }
 
-  const { data: businesses, error: businessError } = await getDashboardBusinesses(supabase);
+  const { data: businesses, error: businessError } = await getDashboardBusinesses(session.user.id);
   const business = await getActiveDashboardBusiness(businesses ?? []);
 
   if (businessError) {

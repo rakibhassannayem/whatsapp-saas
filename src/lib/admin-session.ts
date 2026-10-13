@@ -49,4 +49,3 @@ export async function verifyAdminToken(
     return null;
   }
 }
-

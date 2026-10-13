@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { ADMIN_AUTH_COOKIE_NAME } from "@/lib/supabase/admin-session";
+import { ADMIN_AUTH_COOKIE_NAME } from "@/lib/admin-session";
 
 export async function POST() {
   const cookieStore = await cookies();

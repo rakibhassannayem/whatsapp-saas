@@ -8,7 +8,7 @@ import {
   subscriptionPlans,
 } from "@/lib/db/schema";
 import { auth } from "@/auth";
-import { ACTIVE_BUSINESS_COOKIE } from "@/lib/supabase/dashboard-business";
+import { ACTIVE_BUSINESS_COOKIE } from "@/lib/dashboard-business";
 
 export async function POST(request: Request) {
   const session = await auth();

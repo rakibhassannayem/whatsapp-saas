@@ -1,6 +1,6 @@
 export default function PlatformAdminDataNotice({
   title = "Admin data could not be loaded",
-  description = "Check the Supabase schema, platform-admin migration, and server environment configuration.",
+  description = "Check the database connection, platform-admin status, and server environment configuration.",
 }: {
   title?: string;
   description?: string;
